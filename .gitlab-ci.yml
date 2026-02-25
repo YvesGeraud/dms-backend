@@ -6,7 +6,7 @@ stages:
 dependences_dev:
   stage: dependences
   rules:
-    - if: $CI_COMMIT_BRANCH == "dev2"
+    - if: $CI_COMMIT_BRANCH == "dev"
   tags:
     - dev
   cache:
@@ -21,7 +21,7 @@ dependences_dev:
 build_dev:
   stage: build
   rules:
-    - if: $CI_COMMIT_BRANCH == "dev2"
+    - if: $CI_COMMIT_BRANCH == "dev"
   tags:
     - dev
   cache:
@@ -44,7 +44,7 @@ publish_dev:
     FOLDER: "dms"
   stage: publish
   rules:
-    - if: $CI_COMMIT_BRANCH == "dev2"
+    - if: $CI_COMMIT_BRANCH == "dev"
   tags:
     - dev
   cache:
