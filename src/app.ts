@@ -12,6 +12,7 @@ import {
 } from "./middleware/manejo-errores.middleware";
 import DatabaseConfig from "./config/database.config";
 import tipoDocumentoRoutes from "./routes/tipo-documento.routes";
+import documentoRoutes from "./routes/documento.routes";
 
 // Crear aplicación Express
 const app: Application = express();
@@ -73,7 +74,8 @@ app.get("/health", (req, res) => {
 });
 
 // Rutas de la API
-app.use("/api/tipos-documento", tipoDocumentoRoutes);
+app.use("/api/ct_tipo_documento", tipoDocumentoRoutes);
+app.use("/api/dt_documento", documentoRoutes);
 
 
 // ============================================

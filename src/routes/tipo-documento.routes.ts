@@ -7,8 +7,12 @@ import {
   desactivarTipoDocumento,
   activarTipoDocumento,
 } from "@/controllers/tipo-documento.controller";
+import { verificarJwt } from "@/middleware/auth.middleware";
 
 const router = Router();
+
+// Todas las rutas de tipos de documento requieren JWT
+router.use(verificarJwt);
 
 /**
  * GET    /api/tipos-documento          — Listar (paginado, ?soloActivos=true|false)

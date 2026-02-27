@@ -82,8 +82,8 @@ export const crearTipoDocumento = async (
       throw new ErrorValidacion("'extensiones_permitidas' debe ser un arreglo con al menos un elemento");
     }
 
-    // TODO: Obtener id_ct_usuario_in desde el token JWT cuando se implemente auth
-    const id_ct_usuario_in: number = req.body.id_ct_usuario_in ?? 1;
+    // Obtener id_ct_usuario_in desde el token JWT
+    const id_ct_usuario_in = req.usuario!.id;
 
     const tipo = await TipoDocumentoService.crear({
       clave,
@@ -114,8 +114,8 @@ export const actualizarTipoDocumento = async (
 
     const { clave, descripcion, max_size_bytes, extensiones_permitidas } = req.body;
 
-    // TODO: Obtener id_ct_usuario_up desde el token JWT cuando se implemente auth
-    const id_ct_usuario_up: number = req.body.id_ct_usuario_up ?? 1;
+    // Obtener id_ct_usuario_up desde el token JWT
+    const id_ct_usuario_up = req.usuario!.id;
 
     const tipo = await TipoDocumentoService.actualizar(id, {
       clave,
@@ -144,8 +144,8 @@ export const desactivarTipoDocumento = async (
 
     if (isNaN(id)) throw new ErrorValidacion("El id debe ser un número válido");
 
-    // TODO: Obtener idUsuario desde el token JWT cuando se implemente auth
-    const idUsuario: number = req.body.id_ct_usuario_up ?? 1;
+    // Obtener idUsuario desde el token JWT
+    const idUsuario = req.usuario!.id;
 
     await TipoDocumentoService.desactivar(id, idUsuario);
     enviarSinContenido(res);
@@ -167,8 +167,8 @@ export const activarTipoDocumento = async (
 
     if (isNaN(id)) throw new ErrorValidacion("El id debe ser un número válido");
 
-    // TODO: Obtener idUsuario desde el token JWT cuando se implemente auth
-    const idUsuario: number = req.body.id_ct_usuario_up ?? 1;
+    // Obtener idUsuario desde el token JWT
+    const idUsuario = req.usuario!.id;
 
     const tipo = await TipoDocumentoService.activar(id, idUsuario);
     enviarRespuestaExitosa(res, tipo, "Tipo de documento activado exitosamente");

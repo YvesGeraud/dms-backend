@@ -1,4 +1,4 @@
-import { ct_tipo_documento } from "@/generated/prisma/client";
+import { Prisma, ct_tipo_documento } from "@/generated/prisma/client";
 import { prisma } from "@/config/database.config";
 import {
   ErrorNoEncontrado,
@@ -6,6 +6,8 @@ import {
   ErrorValidacion,
 } from "@/utils/errores.utils";
 import { OpcionesPaginacion, ResultadoPaginado } from "@/types";
+
+// ─── DTOs ────────────────────────────────────────────────────────────────────
 
 export type CrearTipoDocumentoDto = {
   clave: string;
@@ -21,19 +23,54 @@ export type ActualizarTipoDocumentoDto = Partial<
   id_ct_usuario_up: number;
 };
 
+// ─── Helpers privados ─────────────────────────────────────────────────────────
+
+/** Normaliza una lista de extensiones: trim + lowercase */
+function normalizarExtensiones(extensiones: string[]): string[] {
+  return extensiones.map((ext) => ext.trim().toLowerCase());
+}
+
+/** Serializa extensiones para persistencia */
+function serializarExtensiones(extensiones: string[]): string {
+  return JSON.stringify(normalizarExtensiones(extensiones));
+}
+
+/** Valida que el tamaño máximo sea positivo */
+function validarMaxSize(bytes: number): void {
+  if (bytes <= 0) {
+    throw new ErrorValidacion("El tamaño máximo debe ser mayor a 0 bytes");
+  }
+}
+
+/** Valida que haya al menos una extensión */
+function validarExtensiones(extensiones: string[]): void {
+  if (extensiones.length === 0) {
+    throw new ErrorValidacion("Debe indicar al menos una extensión permitida");
+  }
+}
+
+// ─── Servicio ─────────────────────────────────────────────────────────────────
+
 export const TipoDocumentoService = {
   async listar(
     opciones: OpcionesPaginacion & { soloActivos?: boolean }
   ): Promise<ResultadoPaginado<ct_tipo_documento>> {
-    const { pagina = 1, limite = 10, ordenarPor = "id_ct_tipo_documento", orden = "asc", soloActivos = true } = opciones;
-    const saltar = (pagina - 1) * limite;
+    const {
+      pagina = 1,
+      limite = 10,
+      ordenarPor = "id_ct_tipo_documento",
+      orden = "asc",
+      soloActivos = true,
+    } = opciones;
 
-    const where = soloActivos ? { estado: true } : {};
+    const where: Prisma.ct_tipo_documentoWhereInput = soloActivos
+      ? { estado: true }
+      : {};
 
     const [datos, total] = await Promise.all([
       prisma.ct_tipo_documento.findMany({
         where,
-        skip: saltar,
+        skip: (pagina - 1) * limite,
         take: limite,
         orderBy: { [ordenarPor]: orden },
       }),
@@ -55,7 +92,9 @@ export const TipoDocumentoService = {
     });
 
     if (!tipo) {
-      throw new ErrorNoEncontrado(`Tipo de documento con id ${id} no encontrado`);
+      throw new ErrorNoEncontrado(
+        `Tipo de documento con id ${id} no encontrado`
+      );
     }
 
     return tipo;
@@ -67,37 +106,38 @@ export const TipoDocumentoService = {
     });
 
     if (!tipo) {
-      throw new ErrorNoEncontrado(`Tipo de documento con clave "${clave}" no encontrado`);
+      throw new ErrorNoEncontrado(
+        `Tipo de documento con clave "${clave}" no encontrado`
+      );
     }
 
     return tipo;
   },
 
   async crear(dto: CrearTipoDocumentoDto): Promise<ct_tipo_documento> {
-    const claveNormalizada = dto.clave.trim().toUpperCase();
+    const clave = dto.clave.trim().toUpperCase();
 
     const existe = await prisma.ct_tipo_documento.findUnique({
-      where: { clave: claveNormalizada },
+      where: { clave },
     });
 
     if (existe) {
-      throw new ErrorNegocio(`Ya existe un tipo de documento con la clave "${claveNormalizada}"`);
+      throw new ErrorNegocio(
+        `Ya existe un tipo de documento con la clave "${clave}"`
+      );
     }
 
-    if (dto.max_size_bytes <= 0) {
-      throw new ErrorValidacion("El tamaño máximo debe ser mayor a 0 bytes");
-    }
-
-    if (!dto.extensiones_permitidas.length) {
-      throw new ErrorValidacion("Debe indicar al menos una extensión permitida");
-    }
+    validarMaxSize(dto.max_size_bytes);
+    validarExtensiones(dto.extensiones_permitidas);
 
     return prisma.ct_tipo_documento.create({
       data: {
-        clave: claveNormalizada,
+        clave,
         descripcion: dto.descripcion.trim(),
         max_size_bytes: dto.max_size_bytes,
-        extensiones_permitidas: JSON.stringify(dto.extensiones_permitidas),
+        extensiones_permitidas: serializarExtensiones(
+          dto.extensiones_permitidas
+        ),
         id_ct_usuario_in: dto.id_ct_usuario_in,
       },
     });
@@ -109,35 +149,43 @@ export const TipoDocumentoService = {
   ): Promise<ct_tipo_documento> {
     await TipoDocumentoService.obtenerPorId(id);
 
-    const datos: Record<string, any> = {
+    const data: Prisma.ct_tipo_documentoUpdateInput = {
       fecha_up: new Date(),
       id_ct_usuario_up: dto.id_ct_usuario_up,
     };
 
     if (dto.clave !== undefined) {
-      const claveNormalizada = dto.clave.trim().toUpperCase();
+      const clave = dto.clave.trim().toUpperCase();
       const duplicado = await prisma.ct_tipo_documento.findFirst({
-        where: { clave: claveNormalizada, NOT: { id_ct_tipo_documento: id } },
+        where: { clave, NOT: { id_ct_tipo_documento: id } },
       });
       if (duplicado) {
-        throw new ErrorNegocio(`Ya existe otro tipo de documento con la clave "${claveNormalizada}"`);
+        throw new ErrorNegocio(
+          `Ya existe otro tipo de documento con la clave "${clave}"`
+        );
       }
-      datos.clave = claveNormalizada;
+      data.clave = clave;
     }
 
-    if (dto.descripcion !== undefined) datos.descripcion = dto.descripcion.trim();
-    if (dto.max_size_bytes !== undefined) {
-      if (dto.max_size_bytes <= 0) throw new ErrorValidacion("El tamaño máximo debe ser mayor a 0 bytes");
-      datos.max_size_bytes = dto.max_size_bytes;
+    if (dto.descripcion !== undefined) {
+      data.descripcion = dto.descripcion.trim();
     }
+
+    if (dto.max_size_bytes !== undefined) {
+      validarMaxSize(dto.max_size_bytes);
+      data.max_size_bytes = dto.max_size_bytes;
+    }
+
     if (dto.extensiones_permitidas !== undefined) {
-      if (!dto.extensiones_permitidas.length) throw new ErrorValidacion("Debe indicar al menos una extensión permitida");
-      datos.extensiones_permitidas = JSON.stringify(dto.extensiones_permitidas);
+      validarExtensiones(dto.extensiones_permitidas);
+      data.extensiones_permitidas = serializarExtensiones(
+        dto.extensiones_permitidas
+      );
     }
 
     return prisma.ct_tipo_documento.update({
       where: { id_ct_tipo_documento: id },
-      data: datos,
+      data,
     });
   },
 
