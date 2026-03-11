@@ -4,7 +4,7 @@
   "description": "Sistema de gestión documental",
   "main": "index.js",
   "scripts": {
-    "start": "node -r module-alias/register dist/app.js",
+    "start": "node dist/app.js",
     "dev": "tsx watch --clear-screen=false src/app.ts",
     "build": "tsc && cp -r src/generated dist/generated",
     "build:watch": "tsc --watch",

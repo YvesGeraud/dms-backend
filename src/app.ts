@@ -1,4 +1,20 @@
-import "module-alias/register";
+import moduleAlias from "module-alias";
+import path from "path";
+
+moduleAlias.addAliases({
+  "@": path.join(__dirname),
+  "@/config": path.join(__dirname, "config"),
+  "@/controllers": path.join(__dirname, "controllers"),
+  "@/middleware": path.join(__dirname, "middleware"),
+  "@/models": path.join(__dirname, "models"),
+  "@/routes": path.join(__dirname, "routes"),
+  "@/services": path.join(__dirname, "services"),
+  "@/utils": path.join(__dirname, "utils"),
+  "@/validators": path.join(__dirname, "schemas"),
+  "@/types": path.join(__dirname, "types"),
+  "@/generated": path.join(__dirname, "generated"),
+});
+
 import express, { Application } from "express";
 import cors from "cors";
 import helmet from "helmet";
