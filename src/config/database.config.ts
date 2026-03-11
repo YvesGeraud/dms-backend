@@ -1,4 +1,4 @@
-import { PrismaClient } from "@/generated/prisma/client";
+import { PrismaClient } from "../generated/prisma/client";
 import { crearAdapterPrisma } from "./prisma-adapter.config";
 import logger from "./logger.config";
 

@@ -6,8 +6,8 @@ import {
   actualizarTipoDocumento,
   desactivarTipoDocumento,
   activarTipoDocumento,
-} from "@/controllers/tipo-documento.controller";
-import { verificarJwt } from "@/middleware/auth.middleware";
+} from "../controllers/tipo-documento.controller";
+import { verificarJwt } from "../middleware/auth.middleware";
 
 const router = Router();
 

@@ -1,11 +1,11 @@
-import { Prisma, ct_tipo_documento } from "@/generated/prisma/client";
-import { prisma } from "@/config/database.config";
+import { Prisma, ct_tipo_documento } from "../generated/prisma/client";
+import { prisma } from "../config/database.config";
 import {
   ErrorNoEncontrado,
   ErrorNegocio,
   ErrorValidacion,
-} from "@/utils/errores.utils";
-import { OpcionesPaginacion, ResultadoPaginado } from "@/types";
+} from "../utils/errores.utils";
+import { OpcionesPaginacion, ResultadoPaginado } from "../types";
 
 // ─── DTOs ────────────────────────────────────────────────────────────────────
 

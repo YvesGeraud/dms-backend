@@ -1,5 +1,5 @@
 import multer from "multer";
-import { ErrorValidacion } from "@/utils/errores.utils";
+import { ErrorValidacion } from "../utils/errores.utils";
 
 /**
  * Límite global de tamaño de archivo (techo de red).

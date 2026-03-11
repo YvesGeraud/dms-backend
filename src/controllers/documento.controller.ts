@@ -1,11 +1,11 @@
 import { Request, Response, NextFunction } from "express";
 import { StatusCodes } from "http-status-codes";
-import { DocumentoService } from "@/services/documento.service";
+import { DocumentoService } from "../services/documento.service";
 import {
   enviarRecursoCreado,
   enviarRespuestaExitosa,
-} from "@/utils/respuestas.utils";
-import { ErrorValidacion } from "@/utils/errores.utils";
+} from "../utils/respuestas.utils";
+import { ErrorValidacion } from "../utils/errores.utils";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 

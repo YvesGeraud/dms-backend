@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
-import { ErrorAutenticacion } from "@/utils/errores.utils";
-import configuracionServidor from "@/config/servidor.config";
+import { ErrorAutenticacion } from "../utils/errores.utils";
+import configuracionServidor from "../config/servidor.config";
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 

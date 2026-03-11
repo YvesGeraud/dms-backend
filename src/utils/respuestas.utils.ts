@@ -1,7 +1,7 @@
 import { Response } from "express";
 import { StatusCodes } from "http-status-codes";
-import { RespuestaApi, MetaRespuesta } from "@/types";
-import configuracionServidor from "@/config/servidor.config";
+import { RespuestaApi, MetaRespuesta } from "../types";
+import configuracionServidor from "../config/servidor.config";
 
 /**
  * Enviar respuesta exitosa estandarizada

@@ -1,12 +1,12 @@
 import { Request, Response, NextFunction } from "express";
 import { StatusCodes } from "http-status-codes";
-import { TipoDocumentoService } from "@/services/tipo-documento.service";
+import { TipoDocumentoService } from "../services/tipo-documento.service";
 import {
   enviarRespuestaExitosa,
   enviarRecursoCreado,
   enviarSinContenido,
-} from "@/utils/respuestas.utils";
-import { ErrorValidacion } from "@/utils/errores.utils";
+} from "../utils/respuestas.utils";
+import { ErrorValidacion } from "../utils/errores.utils";
 
 // ============================================================
 // LISTAR

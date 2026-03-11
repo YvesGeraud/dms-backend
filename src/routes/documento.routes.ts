@@ -4,9 +4,9 @@ import {
   subirDocumentos,
   verDocumento,
   descargarDocumento,
-} from "@/controllers/documento.controller";
-import { subirUno, subirVarios } from "@/config/multer.config";
-import { verificarJwt } from "@/middleware/auth.middleware";
+} from "../controllers/documento.controller";
+import { subirUno, subirVarios } from "../config/multer.config";
+import { verificarJwt } from "../middleware/auth.middleware";
 
 const router = Router();
 

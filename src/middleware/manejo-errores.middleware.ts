@@ -1,9 +1,9 @@
 import { Request, Response, NextFunction } from "express";
 import { StatusCodes } from "http-status-codes";
-import { ErrorBase, esErrorOperacional } from "@/utils/errores.utils";
-import { enviarRespuestaError } from "@/utils/respuestas.utils";
-import logger from "@/config/logger.config";
-import configuracionServidor from "@/config/servidor.config";
+import { ErrorBase, esErrorOperacional } from "../utils/errores.utils";
+import { enviarRespuestaError } from "../utils/respuestas.utils";
+import logger from "../config/logger.config";
+import configuracionServidor from "../config/servidor.config";
 
 /**
  * Middleware para manejar errores de manera centralizada

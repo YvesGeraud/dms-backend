@@ -1,17 +1,17 @@
 import fs from "fs";
 import path from "path";
-import { dt_documento } from "@/generated/prisma/client";
-import { prisma } from "@/config/database.config";
+import { dt_documento } from "../generated/prisma/client";
+import { prisma } from "../config/database.config";
 import {
   ErrorNoEncontrado,
   ErrorNegocio,
   ErrorValidacion,
-} from "@/utils/errores.utils";
+} from "../utils/errores.utils";
 import {
   generarHash,
   generarNombreSistema,
   obtenerExtension,
-} from "@/utils/archivo.utils";
+} from "../utils/archivo.utils";
 
 // ─── DTOs ────────────────────────────────────────────────────────────────────
 
