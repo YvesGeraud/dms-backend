@@ -37,7 +37,6 @@ build_dev:
     - npx prisma generate
     - npx tsc
     - cp -f .env dist/
-    - cp -rf generated dist/  
 
 publish_dev:
   variables:
@@ -62,6 +61,7 @@ publish_dev:
     - mkdir -p $DEPLOY/$FOLDER/
     - rm -rf $DEPLOY/$FOLDER/*
     - cp -rf $CI_PROJECT_DIR/node_modules/ $DEPLOY/$FOLDER/
+    - cp -rf $CI_PROJECT_DIR/generated/ $DEPLOY/$FOLDER/
     - cp -r $CI_PROJECT_DIR/dist/. $DEPLOY/$FOLDER/
     - mkdir -p $DEPLOY/$FOLDER/tmp/
     - touch $DEPLOY/$FOLDER/tmp/restart.txt
