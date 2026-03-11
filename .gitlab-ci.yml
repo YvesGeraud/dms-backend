@@ -37,6 +37,7 @@ build_dev:
     - npx prisma generate
     - npx tsc
     - cp -f .env dist/
+    - cp -rf generated dist/  
 
 publish_dev:
   variables:
