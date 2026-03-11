@@ -102,7 +102,7 @@ const iniciarServidor = async (): Promise<void> => {
       logger.info(`
 ╔════════════════════════════════════════════════════════════════╗
 ║                                                                ║
-║   🍽️  SISTEMA DE RESTAURANTE - API REST                       ║
+║   🍽️  SISTEMA DE GESTIÓN DOCUMENTAL - API REST                       ║
 ║                                                                ║
 ║   🚀 Servidor: http://localhost:${
         configuracionServidor.puerto
