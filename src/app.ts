@@ -1,5 +1,5 @@
-import moduleAlias from "module-alias";
-import path from "path";
+import * as moduleAlias from "module-alias";
+import * as path from "path";
 
 moduleAlias.addAliases({
   "@": path.join(__dirname),
