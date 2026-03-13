@@ -61,8 +61,10 @@ app.use("/api/", limiteGeneral);
 // RUTAS
 // ============================================
 
+const host = configuracionServidor.host;
+
 // Ruta de salud (health check)
-app.get("/health", (req, res) => {
+app.get(`${host}health`, (req, res) => {
   res.json({
     exito: true,
     mensaje: "Servidor funcionando correctamente",
@@ -74,8 +76,8 @@ app.get("/health", (req, res) => {
 });
 
 // Rutas de la API
-app.use("/api/ct_tipo_documento", tipoDocumentoRoutes);
-app.use("/api/dt_documento", documentoRoutes);
+app.use(`${host}api/ct_tipo_documento`, tipoDocumentoRoutes);
+app.use(`${host}api/dt_documento`, documentoRoutes);
 
 
 // ============================================

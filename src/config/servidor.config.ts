@@ -8,6 +8,7 @@ dotenvExpand.expand(env);
 export const configuracionServidor = {
   puerto: parseInt(process.env.PORT || "3000", 10),
   entorno: process.env.NODE_ENV || "development",
+  host: process.env.HOST || "/", // local: "/"  |  servidor: "/app/dms/"
 
   cors: {
     origenes: process.env.ALLOWED_ORIGINS?.split(",") || [
