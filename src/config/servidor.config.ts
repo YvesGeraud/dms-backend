@@ -52,6 +52,7 @@ export const config = {
   nodeEnv,
   esProduccion: nodeEnv === 'production',
   puerto: numero('PORT', 3000),
+  uploadPath: opcional('UPLOAD_PATH', 'uploads'),
 
   db: {
     url: requerida('DATABASE_URL'),

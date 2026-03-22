@@ -4,6 +4,7 @@ import fs from 'fs';
 import crypto from 'crypto';
 import type { Request, Response } from 'express';
 import { ErrorNoEncontrado, ErrorNegocio } from '@/utils/errores.utils';
+import { config } from '@/config/servidor.config';
 
 // ── MIME types conocidos ──────────────────────────────────────────────────────
 
@@ -30,7 +31,7 @@ export const TIPOS = {
 
 // ── Directorio base de subidas ────────────────────────────────────────────────
 
-export const UPLOADS_DIR = path.resolve('uploads');
+export const UPLOADS_DIR = path.resolve(config.uploadPath);
 
 // ── Tipos ─────────────────────────────────────────────────────────────────────
 
