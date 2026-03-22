@@ -1,51 +1,36 @@
-import { PrismaClient } from "../generated/prisma/client";
-import { crearAdapterPrisma } from "./prisma-adapter.config";
-import logger from "./logger.config";
+import { PrismaClient } from '@/generated/prisma/client';
+import { PrismaMariaDb } from '@prisma/adapter-mariadb';
+import { config } from '@/config/servidor.config';
 
-// Singleton de Prisma para evitar múltiples conexiones
-class DatabaseConfig {
-  private static instancia: PrismaClient;
-
-  private constructor() {}
-
-  public static obtenerInstancia(): PrismaClient {
-    if (!DatabaseConfig.instancia) {
-      const databaseUrl = process.env.DATABASE_URL || "";
-      
-      // Crear adapter usando la factory reutilizable
-      const adapter = crearAdapterPrisma(databaseUrl);
-
-      // Crear instancia de PrismaClient con el adapter
-      DatabaseConfig.instancia = new PrismaClient({
-        adapter,
-        log:
-          process.env.NODE_ENV === "development"
-            ? ["query", "error", "warn"]
-            : ["error"],
-      });
-
-      // Eventos de conexión
-      DatabaseConfig.instancia
-        .$connect()
-        .then(() => {
-          logger.info("✅ Conexión a base de datos establecida");
-        })
-        .catch((error) => {
-          logger.error("❌ Error al conectar a base de datos:", error);
-          process.exit(1);
-        });
-    }
-
-    return DatabaseConfig.instancia;
-  }
-
-  public static async desconectar(): Promise<void> {
-    if (DatabaseConfig.instancia) {
-      await DatabaseConfig.instancia.$disconnect();
-      logger.info("🔌 Desconectado de base de datos");
-    }
-  }
+declare global {
+  var prisma: PrismaClient | undefined;
 }
 
-export const prisma = DatabaseConfig.obtenerInstancia();
-export default DatabaseConfig;
+function crearCliente(): PrismaClient {
+  const adapter = new PrismaMariaDb({
+    host: config.db.host,
+    port: config.db.port,
+    database: config.db.nombre,
+    user: config.db.usuario,
+    password: config.db.password,
+    // En producción: ajusta según (max_connections de MariaDB / nº de instancias del app) - 10 de margen
+    connectionLimit: config.esProduccion ? 20 : 5,
+    // Tiempo máximo para obtener conexión del pool — falla rápido bajo alta carga
+    acquireTimeout: 8_000,
+    // Cierra conexiones inactivas después de 10 min para liberar recursos en el servidor DB
+    idleTimeout: 600_000,
+    // Tiempo máximo para abrir la conexión TCP con el servidor
+    connectTimeout: 5_000,
+  });
+
+  return new PrismaClient({
+    adapter,
+    log: config.nodeEnv === 'development' ? ['query', 'warn', 'error'] : ['error'],
+  });
+}
+
+export const prisma: PrismaClient = globalThis.prisma ?? crearCliente();
+
+if (!config.esProduccion) {
+  globalThis.prisma = prisma;
+}

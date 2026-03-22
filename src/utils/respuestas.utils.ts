@@ -1,66 +1,78 @@
-import { Response } from "express";
-import { StatusCodes } from "http-status-codes";
-import { RespuestaApi, MetaRespuesta } from "../types";
-import configuracionServidor from "../config/servidor.config";
+import type { Response } from 'express';
+import { StatusCodes } from 'http-status-codes';
+
+// ── Tipos ─────────────────────────────────────────────────────────────────────
+
+export interface Meta {
+  pagina: number;
+  totalPaginas: number;
+  totalRegistros: number;
+  porPagina: number;
+}
+
+interface RespuestaExito<T> {
+  exito: true;
+  mensaje: string;
+  datos: T;
+  meta?: Meta;
+}
+
+interface RespuestaError {
+  exito: false;
+  mensaje: string;
+  codigo: string;
+  errores?: ErrorCampo[];
+}
+
+export interface ErrorCampo {
+  campo: string;
+  mensaje: string;
+}
+
+// ── Helper ────────────────────────────────────────────────────────────────────
 
 /**
- * Enviar respuesta exitosa estandarizada
+ * Centraliza todas las respuestas HTTP del sistema.
+ * Uso: responder.ok(res, datos) | responder.creado(res, nuevo) | responder.paginado(...)
  */
-export const enviarRespuestaExitosa = <T>(
-  res: Response,
-  datos?: T,
-  mensaje: string = "Operación exitosa",
-  codigoHttp: number = StatusCodes.OK,
-  meta?: MetaRespuesta
-): Response => {
-  const respuesta: RespuestaApi<T> = {
-    exito: true,
-    mensaje,
-    datos,
-    meta,
-  };
+export const responder = {
+  /** 200 — Consulta o actualización exitosa */
+  ok<T>(res: Response, datos: T, mensaje = 'OK'): Response {
+    const cuerpo: RespuestaExito<T> = { exito: true, mensaje, datos };
+    return res.status(StatusCodes.OK).json(cuerpo);
+  },
 
-  return res.status(codigoHttp).json(respuesta);
-};
+  /** 201 — Recurso creado exitosamente */
+  creado<T>(res: Response, datos: T, mensaje = 'Recurso creado exitosamente'): Response {
+    const cuerpo: RespuestaExito<T> = { exito: true, mensaje, datos };
+    return res.status(StatusCodes.CREATED).json(cuerpo);
+  },
 
-/**
- * Enviar respuesta de error estandarizada
- */
-export const enviarRespuestaError = (
-  res: Response,
-  mensaje: string = "Error en la operación",
-  codigoHttp: number = StatusCodes.INTERNAL_SERVER_ERROR,
-  errores?: any[],
-  stack?: string
-): Response => {
-  const respuesta: any = {
-    exito: false,
-    mensaje,
-    errores,
-  };
+  /** 200 — Lista paginada con meta de paginación */
+  paginado<T>(res: Response, datos: T[], meta: Meta, mensaje = 'OK'): Response {
+    const cuerpo: RespuestaExito<T[]> = { exito: true, mensaje, datos, meta };
+    return res.status(StatusCodes.OK).json(cuerpo);
+  },
 
-  // Incluir stack solo en desarrollo
-  if (!configuracionServidor.estaEnProduccion() && stack) {
-    respuesta.stack = stack;
-  }
+  /** 204 — Eliminación exitosa (sin cuerpo) */
+  sinContenido(res: Response): Response {
+    return res.status(StatusCodes.NO_CONTENT).send();
+  },
 
-  return res.status(codigoHttp).json(respuesta);
-};
-
-/**
- * Respuesta de recurso creado (201)
- */
-export const enviarRecursoCreado = <T>(
-  res: Response,
-  datos: T,
-  mensaje: string = "Recurso creado exitosamente"
-): Response => {
-  return enviarRespuestaExitosa(res, datos, mensaje, StatusCodes.CREATED);
-};
-
-/**
- * Respuesta sin contenido (204)
- */
-export const enviarSinContenido = (res: Response): Response => {
-  return res.status(StatusCodes.NO_CONTENT).send();
+  /** Para uso interno del error middleware — no llamar directamente en controllers */
+  _error(
+    res: Response,
+    statusCode: number,
+    mensaje: string,
+    codigo: string,
+    errores?: ErrorCampo[],
+  ): Response {
+    const cuerpo: RespuestaError = {
+      exito: false,
+      mensaje,
+      codigo,
+      ...(errores?.length && { errores }),
+    };
+    return res.status(statusCode).json(cuerpo);
+  },
 };

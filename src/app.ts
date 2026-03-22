@@ -1,140 +1,107 @@
-import express, { Application } from "express";
-import cors from "cors";
-import helmet from "helmet";
-import compression from "compression";
-import morgan from "morgan";
-import rateLimit from "express-rate-limit";
-import configuracionServidor from "./config/servidor.config";
-import logger from "./config/logger.config";
-import {
-  manejarErrores,
-  manejarRutaNoEncontrada,
-} from "./middleware/manejo-errores.middleware";
-import DatabaseConfig from "./config/database.config";
-import tipoDocumentoRoutes from "./routes/tipo-documento.routes";
-import documentoRoutes from "./routes/documento.routes";
+import express from 'express';
+import helmet from 'helmet';
+import cors from 'cors';
+import compression from 'compression';
+import cookieParser from 'cookie-parser';
+import morgan from 'morgan';
+import { rateLimit } from 'express-rate-limit';
+import { StatusCodes } from 'http-status-codes';
 
-// Crear aplicación Express
-const app: Application = express();
+import { config } from '@/config/servidor.config';
+import { errorMiddleware } from '@/middlewares/error.middlewares';
+//import { morganStream } from '@/utils/logger';
+import { router } from '@/routes';
+//import { authRouter } from '@/routes/auth.route';
 
-// ============================================
-// MIDDLEWARES GLOBALES
-// ============================================
+// ── App ───────────────────────────────────────────────────────────────────────
 
-// Seguridad HTTP headers
+const app = express();
+
+// ── Seguridad ─────────────────────────────────────────────────────────────────
+
+// Cabeceras de seguridad HTTP (elimina X-Powered-By, añade CSP, etc.)
 app.use(helmet());
 
-// CORS
+// CORS: solo los orígenes definidos en .env pueden hacer peticiones con cookies
 app.use(
   cors({
-    origin: configuracionServidor.cors.origenes,
-    credentials: true,
-  })
+    origin: config.cors.origenes,
+    credentials: true, // necesario para que el navegador envíe/reciba cookies httpOnly
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+  }),
 );
 
-// Parsear JSON
-app.use(express.json({ limit: "10mb" }));
-app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+// Rate limiting global — protege contra abuso y ataques de fuerza bruta
+// Para el sistema escolar: 200 req / 15 min por IP es razonable para uso normal
+app.use(
+  rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 200,
+    standardHeaders: 'draft-8', // RateLimit headers estándar (RFC)
+    legacyHeaders: false,
+    message: {
+      exito: false,
+      mensaje: 'Demasiadas peticiones desde esta IP. Intenta de nuevo en 15 minutos.',
+      codigo: 'TOO_MANY_REQUESTS',
+    },
+  }),
+);
 
-// Compresión de respuestas
+// Rate limiting estricto para rutas de autenticación (login, refresh)
+/*const limitarAuth = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20, // solo 20 intentos de login por IP cada 15 min
+  message: {
+    exito: false,
+    mensaje: 'Demasiados intentos de autenticación. Intenta de nuevo en 15 minutos.',
+    codigo: 'TOO_MANY_REQUESTS',
+  },
+});*/
+
+// ── Performance ───────────────────────────────────────────────────────────────
+
+// Comprime respuestas con gzip (reduce ~70% el tamaño en JSON grandes)
 app.use(compression());
 
-// Logging de peticiones HTTP
-if (configuracionServidor.estaEnDesarrollo()) {
-  app.use(morgan("dev"));
-} else {
-  app.use(morgan("combined"));
-}
+// ── Parseo de peticiones ──────────────────────────────────────────────────────
 
-// Rate limiting (limitar peticiones)
-const limiteGeneral = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutos
-  max: 100, // máximo 100 peticiones por IP
-  message: "Demasiadas peticiones desde esta IP, intente más tarde",
-  standardHeaders: true,
-  legacyHeaders: false,
+app.use(express.json({ limit: '10kb' })); // límite para evitar payloads gigantes
+app.use(express.urlencoded({ extended: true, limit: '10kb' }));
+app.use(cookieParser()); // necesario para leer cookies httpOnly
+
+// ── Logging HTTP ──────────────────────────────────────────────────────────────
+
+// 'dev' en desarrollo: coloreado y conciso | 'combined' en prod: formato Apache (para logs)
+app.use(morgan(config.esProduccion ? 'combined' : 'dev'));
+
+// ── Rutas ─────────────────────────────────────────────────────────────────────
+
+// Health check — sin autenticación, útil para balanceadores de carga y monitoreo
+app.get('/health', (_req, res) => {
+  res.status(StatusCodes.OK).json({ estado: 'ok', entorno: config.nodeEnv });
 });
 
-app.use("/api/", limiteGeneral);
+// Auth con rate limiting estricto (limitarAuth) — debe montarse ANTES de /api/v1
+// para que el rate limiter se aplique antes del router general
+//app.use('/api/v1/auth', limitarAuth, authRouter);
 
-// ============================================
-// RUTAS
-// ============================================
+// Resto de módulos centralizados en routes/index.ts
+app.use('/api/', router);
 
-const host = configuracionServidor.host;
+// ── 404 ───────────────────────────────────────────────────────────────────────
 
-// Ruta de salud (health check)
-app.get(`${host}health`, (req, res) => {
-  res.json({
-    exito: true,
-    mensaje: "Servidor funcionando correctamente",
-    datos: {
-      entorno: configuracionServidor.entorno,
-      timestamp: new Date().toISOString(),
-    },
+// Captura cualquier ruta no registrada antes de llegar al error middleware
+app.use((req, res) => {
+  res.status(StatusCodes.NOT_FOUND).json({
+    exito: false,
+    mensaje: `Ruta ${req.method} ${req.path} no encontrada`,
+    codigo: 'NOT_FOUND',
   });
 });
 
-// Rutas de la API
-app.use(`${host}api/ct_tipo_documento`, tipoDocumentoRoutes);
-app.use(`${host}api/dt_documento`, documentoRoutes);
+// ── Error middleware ──────────────────────────────────────────────────────────
 
-
-// ============================================
-// MANEJO DE ERRORES
-// ============================================
-
-// Ruta no encontrada (404)
-app.use(manejarRutaNoEncontrada);
-
-// Manejador global de errores
-app.use(manejarErrores);
-
-// ============================================
-// INICIAR SERVIDOR
-// ============================================
-
-const iniciarServidor = async (): Promise<void> => {
-  try {
-    // Verificar conexión a base de datos
-    await DatabaseConfig.obtenerInstancia().$connect();
-
-    // Iniciar servidor
-    app.listen(configuracionServidor.puerto, () => {
-      logger.info(`
-╔════════════════════════════════════════════════════════════════╗
-║                                                                ║
-║   🍽️  SISTEMA DE GESTIÓN DOCUMENTAL - API REST                       ║
-║                                                                ║
-║   🚀 Servidor: http://localhost:${
-        configuracionServidor.puerto
-      }                       ║
-║   🌍 Entorno: ${configuracionServidor.entorno.toUpperCase()}                                    ║
-║   📅 Fecha: ${new Date().toLocaleString("es-MX")}              ║
-║                                                                ║
-╚════════════════════════════════════════════════════════════════╝
-      `);
-    });
-  } catch (error) {
-    logger.error("❌ Error al iniciar servidor:", error);
-    process.exit(1);
-  }
-};
-
-// Manejar cierre graceful
-process.on("SIGTERM", async () => {
-  logger.info("⚠️  SIGTERM recibido. Cerrando servidor...");
-  await DatabaseConfig.desconectar();
-  process.exit(0);
-});
-
-process.on("SIGINT", async () => {
-  logger.info("⚠️  SIGINT recibido. Cerrando servidor...");
-  await DatabaseConfig.desconectar();
-  process.exit(0);
-});
-
-// Iniciar
-iniciarServidor();
+// SIEMPRE al final — Express lo reconoce por sus 4 parámetros (err, req, res, next)
+app.use(errorMiddleware);
 
 export default app;

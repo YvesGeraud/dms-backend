@@ -1,33 +1,82 @@
-import dotenv from "dotenv";
-import dotenvExpand from "dotenv-expand";
+type NodeEnv = 'development' | 'test' | 'production';
 
-// Cargar variables de entorno
-const env = dotenv.config();
-dotenvExpand.expand(env);
+function requerida(nombre: string): string {
+  const valor = process.env[nombre];
+  if (!valor || valor.trim() === '') {
+    throw new Error(`Variable de entorno requerida: ${nombre}`);
+  }
+  return valor;
+}
 
-export const configuracionServidor = {
-  puerto: parseInt(process.env.PORT || "3000", 10),
-  entorno: process.env.NODE_ENV || "development",
-  host: process.env.HOST || "/", // local: "/"  |  servidor: "/app/dms/"
+function opcional(nombre: string, porDefecto: string): string {
+  const valor = process.env[nombre];
+  return valor && valor.trim() !== '' ? valor : porDefecto;
+}
+
+function numero(nombre: string, porDefecto?: number): number {
+  const raw = process.env[nombre];
+
+  if (!raw || raw.trim() === '') {
+    if (porDefecto === undefined) throw new Error(`Variable de entorno requerida: ${nombre}`);
+    return porDefecto;
+  }
+
+  const n = Number(raw);
+  if (!Number.isFinite(n)) {
+    throw new Error(`Variable de entorno ${nombre} debe ser número. Recibido: "${raw}"`);
+  }
+  return n;
+}
+
+function unoDe<T extends string>(nombre: string, permitidos: readonly T[], porDefecto?: T): T {
+  const raw = process.env[nombre];
+  if (!raw || raw.trim() === '') {
+    if (porDefecto === undefined) throw new Error(`Variable de entorno requerida: ${nombre}`);
+    return porDefecto;
+  }
+  if (!permitidos.includes(raw as T)) {
+    throw new Error(
+      `Variable de entorno ${nombre} inválida. Permitidos: ${permitidos.join(', ')}. Recibido: "${raw}"`,
+    );
+  }
+  return raw as T;
+}
+
+const nodeEnv = unoDe<NodeEnv>(
+  'NODE_ENV',
+  ['development', 'test', 'production'] as const,
+  'development',
+);
+
+export const config = {
+  nodeEnv,
+  esProduccion: nodeEnv === 'production',
+  puerto: numero('PORT', 3000),
+
+  db: {
+    url: requerida('DATABASE_URL'),
+    host: opcional('DB_HOST', 'localhost'),
+    port: numero('DB_PORT', 3306),
+    nombre: opcional('DB_NAME', 'restaurante'),
+    usuario: opcional('DB_USER', 'root'),
+    password: opcional('DB_PASSWORD', ''),
+  },
 
   cors: {
-    origenes: process.env.ALLOWED_ORIGINS?.split(",") || [
-      "http://localhost:4200",
-    ],
+    origenes: opcional('CORS_ORIGINS', 'http://localhost:4200')
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean),
   },
 
   jwt: {
-    secreto: process.env.JWT_SECRET || "secreto-por-defecto-cambiar",
-    expiracion: process.env.JWT_EXPIRES_IN || "24h",
+    secret: requerida('JWT_SECRET'),
+    expiracion: opcional('JWT_EXPIRES_IN', '15m'),
+    refreshSecret: requerida('JWT_REFRESH_SECRET'),
+    refreshExpiracion: opcional('JWT_REFRESH_EXPIRES_IN', '7d'),
   },
 
-  restaurante: {
-    tasaImpuesto: parseFloat(process.env.TASA_IMPUESTO || "0.16"),
-    propinaSugerida: parseFloat(process.env.PROPINA_SUGERIDA || "0.10"),
+  bcrypt: {
+    rounds: numero('BCRYPT_ROUNDS', 12),
   },
-
-  estaEnProduccion: () => process.env.NODE_ENV === "production",
-  estaEnDesarrollo: () => process.env.NODE_ENV === "development",
-};
-
-export default configuracionServidor;
+} as const;

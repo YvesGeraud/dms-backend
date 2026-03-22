@@ -1,26 +1,11 @@
-# Dependencias
 node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-# Archivos de entorno
-#.env
-#.env.local
-#.env.production
-# Compilados
 dist/
-build/
-# Logs
+.env
+.env.local
+.env.production
 logs/
-*.log
-# Archivos subidos
 uploads/
-# Sistema operativo
-.DS_Store
-Thumbs.db
-# IDEs
-.vscode/
-.idea/
-*.swp
-*.swo
+*.log
+src/generated/
+/src/generated/prisma
 /src/generated/prisma

@@ -1,85 +1,92 @@
-import { StatusCodes } from "http-status-codes";
+import { StatusCodes } from 'http-status-codes';
+import type { ErrorCampo } from '@/utils/respuestas.utils';
+
+// ── Códigos de error internos ─────────────────────────────────────────────────
+
+export type CodigoError =
+  | 'NOT_FOUND'
+  | 'BAD_REQUEST'
+  | 'VALIDATION_ERROR'
+  | 'UNAUTHORIZED'
+  | 'FORBIDDEN'
+  | 'CONFLICT'
+  | 'BUSINESS_RULE'
+  | 'INTERNAL_ERROR';
+
+// ── Clase base ────────────────────────────────────────────────────────────────
 
 /**
- * Clase base para errores personalizados
+ * Error operacional controlado. Cualquier error que lances con throw debe
+ * extender esta clase para que el error middleware lo maneje con gracia.
+ *
+ * Errores que NO extienden AppError son considerados bugs inesperados
+ * y se registran en el log con toda la información.
  */
-export class ErrorBase extends Error {
-  public readonly codigoHttp: number;
-  public readonly esOperacional: boolean;
-
-  constructor(mensaje: string, codigoHttp: number, esOperacional = true) {
-    super(mensaje);
-    this.codigoHttp = codigoHttp;
-    this.esOperacional = esOperacional;
-
-    Object.setPrototypeOf(this, new.target.prototype);
-    Error.captureStackTrace(this);
-  }
-}
-
-/**
- * Error de validación (400)
- */
-export class ErrorValidacion extends ErrorBase {
-  constructor(mensaje: string = "Error de validación") {
-    super(mensaje, StatusCodes.BAD_REQUEST);
-  }
-}
-
-/**
- * Error de autenticación (401)
- */
-export class ErrorAutenticacion extends ErrorBase {
-  constructor(mensaje: string = "No autenticado") {
-    super(mensaje, StatusCodes.UNAUTHORIZED);
-  }
-}
-
-/**
- * Error de autorización (403)
- */
-export class ErrorAutorizacion extends ErrorBase {
-  constructor(mensaje: string = "No autorizado") {
-    super(mensaje, StatusCodes.FORBIDDEN);
-  }
-}
-
-/**
- * Recurso no encontrado (404)
- */
-export class ErrorNoEncontrado extends ErrorBase {
-  constructor(mensaje: string = "Recurso no encontrado") {
-    super(mensaje, StatusCodes.NOT_FOUND);
-  }
-}
-
-/**
- * Error de lógica de negocio (422)
- */
-export class ErrorNegocio extends ErrorBase {
-  constructor(mensaje: string) {
-    super(mensaje, StatusCodes.UNPROCESSABLE_ENTITY);
-  }
-}
-
-/**
- * Error interno del servidor (500)
- */
-export class ErrorInterno extends ErrorBase {
+export class AppError extends Error {
   constructor(
-    mensaje: string = "Error interno del servidor",
-    esOperacional = false
+    public readonly mensaje: string,
+    public readonly statusCode: number,
+    public readonly codigo: CodigoError,
+    public readonly errores?: ErrorCampo[],
   ) {
-    super(mensaje, StatusCodes.INTERNAL_SERVER_ERROR, esOperacional);
+    super(mensaje);
+    this.name = this.constructor.name;
+    // Preserva el stack trace correcto en V8 (Node.js)
+    Error.captureStackTrace(this, this.constructor);
+  }
+}
+
+// ── Errores específicos ───────────────────────────────────────────────────────
+
+/** 404 — El recurso pedido no existe */
+export class ErrorNoEncontrado extends AppError {
+  constructor(recurso = 'Recurso') {
+    super(`${recurso} no encontrado`, StatusCodes.NOT_FOUND, 'NOT_FOUND');
+  }
+}
+
+/** 400 — Los datos enviados no pasan validación (campos inválidos) */
+export class ErrorValidacion extends AppError {
+  constructor(mensaje: string, errores?: ErrorCampo[]) {
+    super(mensaje, StatusCodes.BAD_REQUEST, 'VALIDATION_ERROR', errores);
+  }
+}
+
+/** 400 — Petición mal formada en general */
+export class ErrorMalFormado extends AppError {
+  constructor(mensaje: string) {
+    super(mensaje, StatusCodes.BAD_REQUEST, 'BAD_REQUEST');
+  }
+}
+
+/** 401 — No autenticado (sin token o token inválido) */
+export class ErrorNoAutenticado extends AppError {
+  constructor(mensaje = 'No autenticado') {
+    super(mensaje, StatusCodes.UNAUTHORIZED, 'UNAUTHORIZED');
+  }
+}
+
+/** 403 — Autenticado pero sin permisos suficientes */
+export class ErrorNoAutorizado extends AppError {
+  constructor(mensaje = 'No tienes permisos para realizar esta acción') {
+    super(mensaje, StatusCodes.FORBIDDEN, 'FORBIDDEN');
+  }
+}
+
+/** 409 — Conflicto: ya existe un recurso con esos datos únicos */
+export class ErrorDuplicado extends AppError {
+  constructor(mensaje: string) {
+    super(mensaje, StatusCodes.CONFLICT, 'CONFLICT');
   }
 }
 
 /**
- * Verificar si un error es operacional
+ * 422 — Regla de negocio violada.
+ * Para cuando los datos son válidos pero la operación no está permitida.
+ * Ej: "No se puede cancelar una orden ya entregada", "Saldo insuficiente"
  */
-export const esErrorOperacional = (error: Error): boolean => {
-  if (error instanceof ErrorBase) {
-    return error.esOperacional;
+export class ErrorNegocio extends AppError {
+  constructor(mensaje: string) {
+    super(mensaje, StatusCodes.UNPROCESSABLE_ENTITY, 'BUSINESS_RULE');
   }
-  return false;
-};
+}

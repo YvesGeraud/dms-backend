@@ -8,15 +8,13 @@ services:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: dms
     ports:
-      - "3306:3306"
+      - '3306:3306'
     volumes:
       - db_data:/var/lib/mysql
     command: >
-      --character-set-server=utf8mb4
-      --collation-server=utf8mb4_unicode_ci
+      --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     healthcheck:
-      test:
-        ["CMD", "mariadb-admin", "ping", "-h", "127.0.0.1", "-uroot", "-proot"]
+      test: [ 'CMD', 'mariadb-admin', 'ping', '-h', '127.0.0.1', '-uroot', '-proot' ]
       interval: 5s
       timeout: 3s
       retries: 30
@@ -30,6 +28,11 @@ services:
     environment:
       - NODE_ENV=development
       - DATABASE_URL=mysql://root:root@db:3306/dms
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_NAME=dms
+      - DB_USER=root
+      - DB_PASSWORD=root
     depends_on:
       db:
         condition: service_healthy
