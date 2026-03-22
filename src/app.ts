@@ -7,10 +7,10 @@ import morgan from 'morgan';
 import { rateLimit } from 'express-rate-limit';
 import { StatusCodes } from 'http-status-codes';
 
-import { config } from '@/config/servidor.config';
-import { errorMiddleware } from '@/middlewares/error.middlewares';
+import { config } from '@/config/servidor.config.js';
+import { errorMiddleware } from '@/middlewares/error.middlewares.js';
 //import { morganStream } from '@/utils/logger';
-import { router } from '@/routes';
+import { router } from '@/routes/index.js';
 //import { authRouter } from '@/routes/auth.route';
 
 // ── App ───────────────────────────────────────────────────────────────────────

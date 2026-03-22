@@ -1,6 +1,6 @@
-import { PrismaClient } from '@/generated/prisma/client';
+import { PrismaClient } from '@/generated/prisma/client.js';
 import { PrismaMariaDb } from '@prisma/adapter-mariadb';
-import { config } from '@/config/servidor.config';
+import { config } from '@/config/servidor.config.js';
 
 declare global {
   var prisma: PrismaClient | undefined;

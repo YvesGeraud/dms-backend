@@ -1,6 +1,7 @@
 import path from 'path';
-import { prisma } from '@/config/database.config';
-import { buscarOError } from '@/utils/prisma.utils';
+import type { ct_tipo_documento, dt_documento } from '@/generated/prisma/client.js';
+import { prisma } from '@/config/database.config.js';
+import { buscarOError } from '@/utils/prisma.utils.js';
 import {
   validarArchivoContraTipo,
   calcularHashBuffer,
@@ -8,8 +9,8 @@ import {
   guardarArchivoDesdeMemoria,
   EXTENSION_A_MIME,
   MODULOS_CARPETA,
-} from '@/utils/archivo.utils';
-import type { SubirDocumentoDTO } from '@/schemas/dt_documento.schemas';
+} from '@/utils/archivo.utils.js';
+import type { SubirDocumentoDTO } from '@/schemas/dt_documento.schemas.js';
 
 // ── Servicio ──────────────────────────────────────────────────────────────────
 
@@ -29,7 +30,7 @@ class DtDocumentoService {
    */
   async subirDocumento(datos: SubirDocumentoDTO, archivo: Express.Multer.File, idUsuario: number) {
     // ── 1. Verificar que el tipo de documento existe y está activo ───────────
-    const tipodoc = await buscarOError(
+    const tipodoc = await buscarOError<ct_tipo_documento>(
       prisma.ct_tipo_documento.findFirst({
         where: {
           id_ct_tipo_documento: datos.id_ct_tipo_documento,
@@ -105,7 +106,7 @@ class DtDocumentoService {
    * @throws ErrorNoEncontrado si el id no existe o el documento está inactivo
    */
   async obtenerParaDescarga(id: number) {
-    const doc = await buscarOError(
+    const doc = await buscarOError<dt_documento>(
       prisma.dt_documento.findFirst({
         where: { id_dt_documento: id, estado: true },
       }),

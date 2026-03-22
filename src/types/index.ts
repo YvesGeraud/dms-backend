@@ -1,5 +1,5 @@
-//import type { RolUsuario } from '@/generated/prisma/client';
-import type { Meta } from '@/utils/respuestas.utils';
+//import type { RolUsuario } from '@/generated/prisma/client.js';
+import type { Meta } from '@/utils/respuestas.utils.js';
 
 // ── Usuario autenticado ───────────────────────────────────────────────────────
 

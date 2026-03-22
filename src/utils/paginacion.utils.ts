@@ -1,4 +1,4 @@
-import type { Meta } from '@/utils/respuestas.utils';
+import type { Meta } from '@/utils/respuestas.utils.js';
 
 // ── Tipos ─────────────────────────────────────────────────────────────────────
 
