@@ -76,8 +76,12 @@ app.use(morgan(config.esProduccion ? 'combined' : 'dev'));
 
 // ── Rutas ─────────────────────────────────────────────────────────────────────
 
+// Prefijo base para todas las rutas (útil cuando el proxy no reescribe la ruta)
+// local: "/" -> "/health" | servidor: "/app/dms/" -> "/app/dms/health"
+const base = config.basePath.endsWith('/') ? config.basePath : `${config.basePath}/`;
+
 // Health check — sin autenticación, útil para balanceadores de carga y monitoreo
-app.get('/health', (_req, res) => {
+app.get(`${base}health`, (_req, res) => {
   res.status(StatusCodes.OK).json({ estado: 'ok', entorno: config.nodeEnv });
 });
 
@@ -86,7 +90,7 @@ app.get('/health', (_req, res) => {
 //app.use('/api/v1/auth', limitarAuth, authRouter);
 
 // Resto de módulos centralizados en routes/index.ts
-app.use('/api/', router);
+app.use(`${base}api/`, router);
 
 // ── 404 ───────────────────────────────────────────────────────────────────────
 
