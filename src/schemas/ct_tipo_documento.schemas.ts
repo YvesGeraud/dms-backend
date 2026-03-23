@@ -37,6 +37,12 @@ const campos = {
     .trim()
     .max(255, 'Las extensiones permitidas no pueden superar 255 caracteres')
     .optional(),
+
+  modulo: z
+    .string({ error: 'El módulo es requerido' })
+    .trim()
+    .min(1, 'El módulo no puede estar vacío')
+    .max(100, 'El módulo no puede superar 100 caracteres'),
 };
 
 // ── Schemas ───────────────────────────────────────────────────────────────────
@@ -55,6 +61,7 @@ export const actualizarCtTipoDocumentoSchema = z.object({
       descripcion: campos.descripcion.optional(),
       max_size_bytes: campos.max_size_bytes.optional(),
       extensiones_permitidas: campos.extensiones_permitidas.optional(),
+      modulo: campos.modulo.optional(),
       estado: z.boolean().optional(),
     })
     .refine((data) => Object.values(data).some((v) => v !== undefined), {

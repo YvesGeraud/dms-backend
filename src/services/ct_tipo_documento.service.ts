@@ -61,6 +61,7 @@ class CtTipoDocumentoService {
         descripcion: datos.descripcion,
         max_size_bytes: datos.max_size_bytes,
         extensiones_permitidas: datos.extensiones_permitidas,
+        modulo: datos.modulo,
         id_ct_usuario_in,
       },
     });
@@ -116,6 +117,7 @@ class CtTipoDocumentoService {
         descripcion: d.descripcion,
         max_size_bytes: d.max_size_bytes,
         extensiones_permitidas: d.extensiones_permitidas,
+        modulo: d.modulo,
         id_ct_usuario_in,
       })),
       { tamanioLote: 50 },
