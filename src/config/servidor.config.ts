@@ -60,7 +60,7 @@ export const config = {
     url: opcional('DATABASE_URL', ''),
     host: opcional('DB_HOST', 'localhost'),
     port: numero('DB_PORT', 3306),
-    nombre: opcional('DB_NAME', 'restaurante'),
+    nombre: opcional('DBNAMES', 'restaurante'),
     usuario: opcional('DB_USER', 'root'),
     password: opcional('DB_PASSWORD', ''),
   },
