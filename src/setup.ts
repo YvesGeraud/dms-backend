@@ -82,23 +82,23 @@ app.use(morgan(config.esProduccion ? 'combined' : 'dev'));
 const base = config.basePath.endsWith('/') ? config.basePath : `${config.basePath}/`;
 
 // Health check — sin autenticación, útil para balanceadores de carga y monitoreo
-  app.get(`${base}health`, async (_req, res) => {
-    try {
-      await prisma.$queryRaw`SELECT 1 as db_health_check`;
-      res.status(StatusCodes.OK).json({ 
-        estado: 'ok', 
-        entorno: config.nodeEnv, 
-        base_datos: 'conectada' 
-      });
-    } catch (error: any) {
-      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ 
-        estado: 'error', 
-        entorno: config.nodeEnv, 
-        base_datos: 'desconectada', 
-        mensaje: error.message 
-      });
-    }
-  });
+app.get(`${base}health`, async (_req, res) => {
+  try {
+    await prisma.$queryRaw`SELECT 1 as db_health_check`;
+    res.status(StatusCodes.OK).json({
+      estado: 'ok',
+      entorno: config.nodeEnv,
+      base_datos: 'conectada',
+    });
+  } catch (error: any) {
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      estado: 'error',
+      entorno: config.nodeEnv,
+      base_datos: 'desconectada',
+      mensaje: error.message,
+    });
+  }
+});
 
 // Auth con rate limiting estricto (limitarAuth) — debe montarse ANTES de /api/v1
 // para que el rate limiter se aplique antes del router general

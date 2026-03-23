@@ -57,12 +57,12 @@ export const config = {
   basePath: opcional('HOST', '/'), // local: "/", servidor: "/app/dms/"
 
   db: {
-    url: opcional('DATABASE_URL', 'mysql://root:root@db:3306/dms'),
-    host: opcional('DB_HOST', 'db'),
+    url: opcional('DATABASE_URL', ''),
+    host: opcional('DB_HOST', 'localhost'),
     port: numero('DB_PORT', 3306),
-    nombre: opcional('DBNAMES', 'dms'),
+    nombre: opcional('DB_NAME', 'restaurante'),
     usuario: opcional('DB_USER', 'root'),
-    password: opcional('DB_PASSWORD', 'root'),
+    password: opcional('DB_PASSWORD', ''),
   },
 
   cors: {
@@ -73,9 +73,9 @@ export const config = {
   },
 
   jwt: {
-    secret: opcional('JWT_SECRET', 'secret'),
+    secret: opcional('JWT_SECRET', ''),
     expiracion: opcional('JWT_EXPIRES_IN', '15m'),
-    refreshSecret: opcional('JWT_REFRESH_SECRET', 'refreshSecret'),
+    refreshSecret: opcional('JWT_REFRESH_SECRET', ''),
     refreshExpiracion: opcional('JWT_REFRESH_EXPIRES_IN', '7d'),
   },
 
