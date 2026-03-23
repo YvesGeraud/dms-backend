@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import express from 'express';
 import ctTipoDocumentoController from '@/controllers/ct_tipo_documento.controller';
 import { validar } from '@/middlewares/validar.middleware';
 import {
@@ -8,7 +8,7 @@ import {
   crearCtTipoDocumentosLoteSchema,
 } from '@/schemas/ct_tipo_documento.schemas';
 
-const router = Router();
+const router = express.Router();
 
 router.get('/', validar(filtrosCtTipoDocumentoSchema), ctTipoDocumentoController.listar);
 router.get('/:id', ctTipoDocumentoController.obtenerPorId);
