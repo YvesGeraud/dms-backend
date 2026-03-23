@@ -73,9 +73,9 @@ export const config = {
   },
 
   jwt: {
-    secret: requerida('JWT_SECRET'),
+    secret: opcional('JWT_SECRET', ''),
     expiracion: opcional('JWT_EXPIRES_IN', '15m'),
-    refreshSecret: requerida('JWT_REFRESH_SECRET'),
+    refreshSecret: opcional('JWT_REFRESH_SECRET', ''),
     refreshExpiracion: opcional('JWT_REFRESH_EXPIRES_IN', '7d'),
   },
 
