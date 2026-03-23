@@ -1,7 +1,7 @@
 // dotenv debe cargarse PRIMERO — antes de cualquier import que lea process.env
 import 'dotenv/config';
 
-import app from './express';
+import app from './setup';
 import { config } from '@/config/servidor.config';
 import { prisma } from '@/config/database.config';
 
