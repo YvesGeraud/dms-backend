@@ -11,10 +11,10 @@ const router = express.Router();
 // El servicio valida contra BD y luego escribe a disco con el path correcto.
 const memoriaUpload = multer({ storage: multer.memoryStorage() });
 
-// Schema reutilizable para validar :id en params
-const idParamSchema = z.object({
+// Schema reutilizable para validar :hash en params
+const hashParamSchema = z.object({
   params: z.object({
-    id: z.coerce.number().int().positive('El id debe ser un número positivo'),
+    hash: z.string().min(1, 'El hash es requerido'),
   }),
 });
 
@@ -36,12 +36,12 @@ router.post(
 );
 
 /**
- * GET /api/dt_documento/:id/descargar?inline=true
+ * GET /api/dt_documento/:hash/descargar?inline=true
  *
  * Descarga un documento mediante ReadStream (sin cargarlo en RAM).
  *   - inline=true  → el navegador muestra el archivo (PDF, imágenes)
  *   - inline=false → fuerza descarga con el nombre original del archivo
  */
-router.get('/:id/descargar', validar(idParamSchema), dtDocumentoController.descargar);
+router.get('/:hash/descargar', validar(hashParamSchema), dtDocumentoController.descargar);
 
 export default router;

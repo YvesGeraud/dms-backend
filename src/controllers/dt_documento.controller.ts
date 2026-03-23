@@ -39,7 +39,7 @@ class DtDocumentoController {
   }
 
   /**
-   * GET /api/dt_documento/:id/descargar?inline=true
+   * GET /api/dt_documento/:hash/descargar?inline=true
    *
    * Envía el archivo al cliente mediante ReadStream (sin cargarlo en RAM).
    *
@@ -48,7 +48,7 @@ class DtDocumentoController {
    *   - inline=false (default) → fuerza descarga con el nombre original
    */
   async descargar(req: Request, res: Response): Promise<void> {
-    const hash = req.body['hash'];
+    const hash = req.params['hash'] as string;
     const inline = req.query['inline'] === 'true';
 
     const { doc, rutaAbsoluta } = await dtDocumentoService.obtenerParaDescarga(hash);

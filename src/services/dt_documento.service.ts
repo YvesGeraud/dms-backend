@@ -100,9 +100,9 @@ class DtDocumentoService {
   /**
    * Localiza un documento en BD y retorna su ruta absoluta para streaming.
    *
-   * @param id - id_dt_documento
+   * @param hash - hash del documento
    * @returns El registro completo + la ruta absoluta del archivo en disco
-   * @throws ErrorNoEncontrado si el id no existe o el documento está inactivo
+   * @throws ErrorNoEncontrado si el hash no existe o el documento está inactivo
    */
   async obtenerParaDescarga(hash: string) {
     const doc = await buscarOError(
