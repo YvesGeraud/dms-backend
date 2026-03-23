@@ -60,7 +60,7 @@ export const config = {
     url: opcional('DATABASE_URL', 'mysql://root:root@db:3306/dms'),
     host: opcional('DB_HOST', 'db'),
     port: numero('DB_PORT', 3306),
-    nombre: opcional('DB_NAME', 'dms'),
+    nombre: opcional('DBNAMES', 'dms'),
     usuario: opcional('DB_USER', 'root'),
     password: opcional('DB_PASSWORD', 'root'),
   },
