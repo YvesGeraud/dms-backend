@@ -19,6 +19,7 @@ model ct_tipo_documento {
   max_size_bytes         Int
   extensiones_permitidas String    @default("pdf,jpg,png") @db.VarChar(255)
   estado                 Boolean   @default(true)
+  modulo                 String    @db.VarChar(100)
   fecha_in               DateTime  @default(now()) @db.DateTime(0)
   fecha_up               DateTime? @db.DateTime(0)
   id_ct_usuario_in       Int
@@ -40,7 +41,6 @@ model dt_documento {
   tama_o_bytes         Int       @map("tamaño_bytes")
   hash                 String    @db.VarChar(64)
   id_ct_tipo_documento Int
-  modulo               String    @db.VarChar(100)
   estado               Boolean   @default(true)
   fecha_in             DateTime  @default(now()) @db.DateTime(0)
   fecha_up             DateTime? @db.DateTime(0)

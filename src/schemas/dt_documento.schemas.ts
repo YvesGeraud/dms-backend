@@ -17,23 +17,14 @@ export const subirDocumentoSchema = z.object({
       .positive('id_ct_tipo_documento debe ser un número positivo'),
 
     /**
-     * Id de la persona/expediente al que pertenece el documento.
+     * Id del usuario al que pertenece el documento.
      * Se usa como nombre de subcarpeta en uploads/ (ej: uploads/comun/3/).
      */
-    id_ct_rupeet: z.coerce
-      .number({ error: 'id_ct_rupeet es requerido' })
+    id_ct_usuario: z.coerce
+      .number({ error: 'id_ct_usuario es requerido' })
       .int()
-      .positive('id_ct_rupeet debe ser un número positivo'),
+      .positive('id_ct_usuario debe ser un número positivo'),
 
-    /**
-     * Módulo al que pertenece el documento.
-     * Determina la estructura de carpetas donde se guardará el archivo.
-     * Ejemplo: 1 = comun, 255 = sistema/Proni
-     */
-    id_ct_modulo: z.coerce
-      .number({ error: 'id_ct_modulo es requerido' })
-      .int()
-      .positive('id_ct_modulo debe ser un número positivo'),
   }),
 });
 

@@ -324,20 +324,7 @@ export const EXTENSION_A_MIME: Record<string, string> = {
   '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 };
 
-/**
- * Mapeo de id_ct_modulo → segmentos de carpeta dentro de uploads/.
- *
- * Estructura resultante:
- *   - id 1   → uploads/comun/{id_rupeet}/
- *   - id 255 → uploads/sistema/Proni/{id_rupeet}/
- *
- * Cuando la tabla de módulos se migre a este sistema, este objeto
- * se reemplaza por una consulta a BD y el resto del código no cambia.
- */
-export const MODULOS_CARPETA: Record<number, string[]> = {
-  1: ['comun'],
-  255: ['sistema', 'Proni'],
-};
+
 
 /**
  * Forma que expone Prisma para el registro de ct_tipo_documento.
@@ -412,30 +399,25 @@ export function calcularHashBuffer(buffer: Buffer): string {
  * Resuelve la ruta absoluta del directorio destino según el módulo y el id de la persona.
  * Crea el directorio si no existe (operación idempotente).
  *
- * @param idModulo  - Id del módulo (debe existir en MODULOS_CARPETA)
- * @param idRupeet  - Id de la persona/expediente (se convierte en nombre de subcarpeta)
+ * @param moduloCampo - Nombre del módulo almacenado en BD (ej: "comun", "Proni")
+ * @param idUsuario   - Id del usuario (se convierte en nombre de subcarpeta final)
  * @returns Ruta absoluta del directorio destino
- *
- * @throws ErrorNegocio si el módulo no está registrado en MODULOS_CARPETA
- *
- * @example
- * const dir = resolverRutaModulo(1, 3);
- * // → /abs/uploads/comun/3
- *
- * const dir = resolverRutaModulo(255, 3);
- * // → /abs/uploads/sistema/Proni/3
  */
-export function resolverRutaModulo(idModulo: number, idRupeet: number): string {
-  const segmentos = MODULOS_CARPETA[idModulo];
-
-  if (!segmentos) {
-    throw new ErrorNegocio(
-      `El módulo ${idModulo} no está configurado en el sistema de archivos. ` +
-        `Módulos disponibles: ${Object.keys(MODULOS_CARPETA).join(', ')}`,
-    );
+export function resolverRutaModulo(moduloCampo: string, idUsuario: number): string {
+  const mod = moduloCampo.trim();
+  
+  if (!mod) {
+    throw new ErrorNegocio('El tipo de documento no tiene un módulo válido asignado.');
   }
 
-  const directorio = path.join(UPLOADS_DIR, ...segmentos, String(idRupeet));
+  // Regla de carpetas:
+  // - Si el módulo es "comun", va a uploads/comun/{idUsuario}
+  // - Si es ajeno a comun (ej. "Proni"), va a uploads/sistema/{modulo}/{idUsuario}
+  const segmentos = mod.toLowerCase() === 'comun' 
+    ? ['comun'] 
+    : ['sistema', mod];
+
+  const directorio = path.join(UPLOADS_DIR, ...segmentos, String(idUsuario));
   fs.mkdirSync(directorio, { recursive: true });
   return directorio;
 }

@@ -7,7 +7,6 @@ import {
   resolverRutaModulo,
   guardarArchivoDesdeMemoria,
   EXTENSION_A_MIME,
-  MODULOS_CARPETA,
 } from '@/utils/archivo.utils';
 import type { SubirDocumentoDTO } from '@/schemas/dt_documento.schemas';
 
@@ -45,7 +44,8 @@ class DtDocumentoService {
 
     // ── 3. Resolver la ruta destino según el módulo + rupeet ─────────────────
     //    Crea la carpeta si no existe (mkdirSync recursive)
-    const directorio = resolverRutaModulo(datos.id_ct_modulo, datos.id_ct_rupeet);
+    //    El nombre de módulo o carpeta (ej: "comun" o "sistema/Proni") viene en tipodoc.modulo
+    const directorio = resolverRutaModulo(tipodoc.modulo, datos.id_ct_usuario);
 
     // ── 4. Calcular hash SHA-256 del buffer ──────────────────────────────────
     const hash = calcularHashBuffer(archivo.buffer);
@@ -72,10 +72,6 @@ class DtDocumentoService {
     // Ej: uploads/comun/3/abc123...def.pdf
     const rutaRelativa = path.relative(process.cwd(), ruta).replace(/\\/g, '/');
 
-    // Nombre del módulo para el campo modulo en BD (último segmento de la carpeta)
-    const segmentos = MODULOS_CARPETA[datos.id_ct_modulo];
-    const nombreModulo = segmentos[segmentos.length - 1];
-
     // MIME type derivado de la extensión
     const mimeType = EXTENSION_A_MIME[ext] ?? archivo.mimetype;
 
@@ -89,7 +85,6 @@ class DtDocumentoService {
         tama_o_bytes: archivo.size,
         hash,
         id_ct_tipo_documento: datos.id_ct_tipo_documento,
-        modulo: nombreModulo,
         id_ct_usuario_in: idUsuario,
       },
     });

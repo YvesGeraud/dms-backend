@@ -25,13 +25,12 @@ const hashParamSchema = z.object({
  * Body (multipart/form-data):
  *   - archivo              : File
  *   - id_ct_tipo_documento : number
- *   - id_ct_rupeet         : number
- *   - id_ct_modulo         : number
+ *   - id_ct_usuario        : number
  */
 router.post(
   '/subir',
   memoriaUpload.single('archivo'), // 1° multer pone el buffer en req.file
-  validar(subirDocumentoSchema), // 2° Zod valida los 3 IDs del body
+  validar(subirDocumentoSchema), // 2° Zod valida los IDs del body
   dtDocumentoController.subir, // 3° controlador llama al servicio
 );
 

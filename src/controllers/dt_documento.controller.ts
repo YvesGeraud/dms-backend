@@ -16,8 +16,7 @@ class DtDocumentoController {
    *
    * Recibe un archivo vía multipart/form-data junto con:
    *   - id_ct_tipo_documento : number  (qué tipo de documento es)
-   *   - id_ct_rupeet         : number  (a qué persona/expediente pertenece)
-   *   - id_ct_modulo         : number  (en qué módulo/sistema se guarda)
+   *   - id_ct_usuario        : number  (a qué usuario pertenece)
    *
    * El middleware multer (memoryStorage) deja el archivo en req.file.buffer
    * antes de que llegue al controlador.
