@@ -58,7 +58,7 @@ export const config = {
 
   db: {
     url: opcional('DATABASE_URL', 'mysql://root:root@db:3306/dms'),
-    host: opcional('DB_HOST', 'db'),
+    host: process.env.DB_HOST_OVERRIDE || opcional('DB_HOST', 'db'),
     port: numero('DB_PORT', 3306),
     nombre: opcional('DBNAMES', 'dms'),
     usuario: opcional('DB_USER', 'root'),

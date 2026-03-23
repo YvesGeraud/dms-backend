@@ -1,6 +1,5 @@
 // dotenv debe cargarse PRIMERO — antes de cualquier import que lea process.env
-import * as dotenv from 'dotenv';
-dotenv.config({ override: true });
+import 'dotenv/config';
 
 import app from './setup';
 import { config } from '@/config/servidor.config';
