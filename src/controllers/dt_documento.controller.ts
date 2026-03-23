@@ -48,10 +48,10 @@ class DtDocumentoController {
    *   - inline=false (default) → fuerza descarga con el nombre original
    */
   async descargar(req: Request, res: Response): Promise<void> {
-    const id = Number(req.params['id']);
+    const hash = req.body['hash'];
     const inline = req.query['inline'] === 'true';
 
-    const { doc, rutaAbsoluta } = await dtDocumentoService.obtenerParaDescarga(id);
+    const { doc, rutaAbsoluta } = await dtDocumentoService.obtenerParaDescarga(hash);
 
     // Usa el nombre_original para el header — el usuario ve el nombre real, no el hash
     await descargarArchivo(res, rutaAbsoluta, doc.nombre_original, !inline);

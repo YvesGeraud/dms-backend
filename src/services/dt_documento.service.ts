@@ -104,10 +104,10 @@ class DtDocumentoService {
    * @returns El registro completo + la ruta absoluta del archivo en disco
    * @throws ErrorNoEncontrado si el id no existe o el documento está inactivo
    */
-  async obtenerParaDescarga(id: number) {
+  async obtenerParaDescarga(hash: string) {
     const doc = await buscarOError(
       prisma.dt_documento.findFirst({
-        where: { id_dt_documento: id, estado: true },
+        where: { hash, estado: true },
       }),
       'dt_documento',
     );
