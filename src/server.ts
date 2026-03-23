@@ -1,9 +1,9 @@
 // dotenv debe cargarse PRIMERO — antes de cualquier import que lea process.env
 import 'dotenv/config';
 
-import app from './app.js';
-import { config } from '@/config/servidor.config.js';
-import { prisma } from '@/config/database.config.js';
+import app from './app';
+import { config } from '@/config/servidor.config';
+import { prisma } from '@/config/database.config';
 
 // ── Iniciar servidor ──────────────────────────────────────────────────────────
 

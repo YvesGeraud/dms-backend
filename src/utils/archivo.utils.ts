@@ -3,8 +3,8 @@ import path from 'path';
 import fs from 'fs';
 import crypto from 'crypto';
 import type { Request, Response } from 'express';
-import { ErrorNoEncontrado, ErrorNegocio } from '@/utils/errores.utils.js';
-import { config } from '@/config/servidor.config.js';
+import { ErrorNoEncontrado, ErrorNegocio } from '@/utils/errores.utils';
+import { config } from '@/config/servidor.config';
 
 // ── MIME types conocidos ──────────────────────────────────────────────────────
 

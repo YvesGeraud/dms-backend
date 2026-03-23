@@ -1,15 +1,15 @@
-import { Prisma } from '@/generated/prisma/client.js';
-import { prisma } from '@/config/database.config.js';
-import { buscarOError, verificarNoExiste } from '@/utils/prisma.utils.js';
-import { paginar } from '@/utils/paginacion.utils.js';
-import { insertarEnLotes } from '@/utils/batch.utils.js';
-import type { OpcionesPaginacion } from '@/utils/paginacion.utils.js';
+import { Prisma } from '@/generated/prisma/client';
+import { prisma } from '@/config/database.config';
+import { buscarOError, verificarNoExiste } from '@/utils/prisma.utils';
+import { paginar } from '@/utils/paginacion.utils';
+import { insertarEnLotes } from '@/utils/batch.utils';
+import type { OpcionesPaginacion } from '@/utils/paginacion.utils';
 import type {
   CrearCtTipoDocumentoDTO,
   ActualizarCtTipoDocumentoDTO,
   FiltrosCtTipoDocumento,
-} from '@/schemas/ct_tipo_documento.schemas.js';
-import { CAMPOS_ORDENABLES_CT_TIPO_DOCUMENTO } from '@/schemas/ct_tipo_documento.schemas.js';
+} from '@/schemas/ct_tipo_documento.schemas';
+import { CAMPOS_ORDENABLES_CT_TIPO_DOCUMENTO } from '@/schemas/ct_tipo_documento.schemas';
 
 // ── Servicio ──────────────────────────────────────────────────────────────────
 

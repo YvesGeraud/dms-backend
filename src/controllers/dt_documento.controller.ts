@@ -1,9 +1,9 @@
 import type { Request, Response } from 'express';
-import dtDocumentoService from '@/services/dt_documento.service.js';
-import { responder } from '@/utils/respuestas.utils.js';
-import { ErrorNegocio } from '@/utils/errores.utils.js';
-import { descargarArchivo } from '@/utils/archivo.utils.js';
-import type { SubirDocumentoDTO } from '@/schemas/dt_documento.schemas.js';
+import dtDocumentoService from '@/services/dt_documento.service';
+import { responder } from '@/utils/respuestas.utils';
+import { ErrorNegocio } from '@/utils/errores.utils';
+import { descargarArchivo } from '@/utils/archivo.utils';
+import type { SubirDocumentoDTO } from '@/schemas/dt_documento.schemas';
 
 /**
  * Express 5 propaga automáticamente los errores de Promises rechazadas al

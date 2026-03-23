@@ -1,4 +1,4 @@
-import { ErrorNoEncontrado, ErrorNegocio, ErrorDuplicado } from '@/utils/errores.utils.js';
+import { ErrorNoEncontrado, ErrorNegocio, ErrorDuplicado } from '@/utils/errores.utils';
 
 /**
  * Ejecuta una query y lanza ErrorNoEncontrado si devuelve null.

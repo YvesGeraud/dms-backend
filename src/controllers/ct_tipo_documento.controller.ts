@@ -1,12 +1,12 @@
 import type { Request, Response } from 'express';
-import ctTipoDocumentoService from '../services/ct_tipo_documento.service.js';
-import { responder } from '@/utils/respuestas.utils.js';
+import ctTipoDocumentoService from '../services/ct_tipo_documento.service';
+import { responder } from '@/utils/respuestas.utils';
 import type {
   CrearCtTipoDocumentoDTO,
   ActualizarCtTipoDocumentoDTO,
   FiltrosCtTipoDocumento,
   CrearCtTipoDocumentosLoteDTO,
-} from '@/schemas/ct_tipo_documento.schemas.js';
+} from '@/schemas/ct_tipo_documento.schemas';
 
 /**
  * Express 5 propaga automáticamente los errores de Promises rechazadas al

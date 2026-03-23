@@ -1,5 +1,5 @@
 import { StatusCodes } from 'http-status-codes';
-import type { ErrorCampo } from '@/utils/respuestas.utils.js';
+import type { ErrorCampo } from '@/utils/respuestas.utils';
 
 // ── Códigos de error internos ─────────────────────────────────────────────────
 

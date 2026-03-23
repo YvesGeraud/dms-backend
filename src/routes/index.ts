@@ -1,8 +1,8 @@
 import { Router } from 'express';
 
 //
-import ctTipoDocumentosRoute from '@/routes/ct_tipo_documentos.route.js';
-import dtDocumentoRoute from '@/routes/dt_documento.route.js';
+import ctTipoDocumentosRoute from '@/routes/ct_tipo_documentos.route';
+import dtDocumentoRoute from '@/routes/dt_documento.route';
 
 export const router = Router();
 

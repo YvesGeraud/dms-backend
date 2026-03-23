@@ -1,7 +1,6 @@
 import path from 'path';
-import type { ct_tipo_documento, dt_documento } from '@/generated/prisma/client.js';
-import { prisma } from '@/config/database.config.js';
-import { buscarOError } from '@/utils/prisma.utils.js';
+import { prisma } from '@/config/database.config';
+import { buscarOError } from '@/utils/prisma.utils';
 import {
   validarArchivoContraTipo,
   calcularHashBuffer,
@@ -9,8 +8,8 @@ import {
   guardarArchivoDesdeMemoria,
   EXTENSION_A_MIME,
   MODULOS_CARPETA,
-} from '@/utils/archivo.utils.js';
-import type { SubirDocumentoDTO } from '@/schemas/dt_documento.schemas.js';
+} from '@/utils/archivo.utils';
+import type { SubirDocumentoDTO } from '@/schemas/dt_documento.schemas';
 
 // ── Servicio ──────────────────────────────────────────────────────────────────
 
@@ -21,9 +20,8 @@ class DtDocumentoService {
    *   2. Valida que el archivo cumple las reglas del tipo (ext + tamaño)
    *   3. Resuelve y crea la carpeta destino según el módulo y el rupeet
    *   4. Calcula el hash SHA-256 del archivo (deduplicación)
-   *   5. Si el hash ya existe en BD, reutiliza el registro pero igual escribe el
-   *      archivo en la carpeta del módulo/rupeet actual (evita carpeta vacía).
-   *   6. Si es contenido nuevo: persiste el registro en dt_documento
+   *   5. Escribe en disco (omite escritura si es duplicado)
+   *   6. Persiste el registro en dt_documento
    *
    * @param datos      - IDs validados por Zod desde el body multipart
    * @param archivo    - Archivo en memoria (memoryStorage de Multer)
@@ -31,7 +29,7 @@ class DtDocumentoService {
    */
   async subirDocumento(datos: SubirDocumentoDTO, archivo: Express.Multer.File, idUsuario: number) {
     // ── 1. Verificar que el tipo de documento existe y está activo ───────────
-    const tipodoc = await buscarOError<ct_tipo_documento>(
+    const tipodoc = await buscarOError(
       prisma.ct_tipo_documento.findFirst({
         where: {
           id_ct_tipo_documento: datos.id_ct_tipo_documento,
@@ -57,20 +55,18 @@ class DtDocumentoService {
     const nombreSistema = `${hash}${ext}`;
 
     // ── 5. Deduplicación en BD: si ya existe un registro activo con el mismo
-    //       hash, reutilizamos ese registro (un solo dt_documento por contenido).
-    //       Aun así debemos asegurar el archivo en disco en la carpeta de ESTE
-    //       módulo/rupeet: si no, la segunda subida del mismo archivo no dejaba
-    //       copia en uploads/sistema/Proni/{rupeet}/ y parecía "no guardar".
+    //       hash, retornamos ese directamente sin tocar disco ni insertar nada.
+    //       Si existe pero está inactivo (estado=false), continuamos normalmente.
     const existente = await prisma.dt_documento.findFirst({
       where: { hash, estado: true },
     });
 
-    // ── 6. Escribir a disco (siempre que haya buffer: nuevo o duplicado en BD) ─
-    const { ruta } = await guardarArchivoDesdeMemoria(archivo.buffer, directorio, nombreSistema);
-
     if (existente) {
       return { ...existente, duplicado: true };
     }
+
+    // ── 6. Escribir a disco (solo si el contenido es nuevo en BD) ────────────
+    const { ruta } = await guardarArchivoDesdeMemoria(archivo.buffer, directorio, nombreSistema);
 
     // Ruta relativa desde la raíz del proyecto (para portabilidad entre entornos)
     // Ej: uploads/comun/3/abc123...def.pdf
@@ -109,7 +105,7 @@ class DtDocumentoService {
    * @throws ErrorNoEncontrado si el id no existe o el documento está inactivo
    */
   async obtenerParaDescarga(id: number) {
-    const doc = await buscarOError<dt_documento>(
+    const doc = await buscarOError(
       prisma.dt_documento.findFirst({
         where: { id_dt_documento: id, estado: true },
       }),

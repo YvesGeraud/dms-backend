@@ -1,7 +1,7 @@
 import path from 'path';
 import fs from 'fs';
 import winston from 'winston';
-import { config } from '@/config/servidor.config.js';
+import { config } from '@/config/servidor.config';
 
 const { combine, timestamp, errors, colorize, printf, json } = winston.format;
 

@@ -20,17 +20,28 @@ services:
       retries: 30
 
   backend:
-    build: .
+    image: node:lts-alpine
     container_name: dms_backend
+    working_dir: /usr/src/app
     ports:
       - "3000:3000"
-    env_file: .env
     environment:
-      - DB_HOST=db
+      - NODE_ENV=development
       - DATABASE_URL=mysql://root:root@db:3306/dms
+      - UPLOAD_PATH=uploads
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_NAME=dms
+      - DB_USER=root
+      - DB_PASSWORD=root
     depends_on:
       db:
         condition: service_healthy
+    volumes:
+      - .:/usr/src/app
+      - node_modules:/usr/src/app/node_modules
+    command: sh -lc "npm install && npm run db:generate && npm run dev"
 
 volumes:
   db_data:
+  node_modules:
