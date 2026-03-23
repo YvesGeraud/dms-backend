@@ -1,13 +1,13 @@
 import type { NextFunction, Request, Response } from 'express';
 import { ZodError, type ZodIssue } from 'zod';
-import { JsonWebTokenError, TokenExpiredError } from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
 import { StatusCodes } from 'http-status-codes';
 //import multer from 'multer'; // Descomentamos esto cuando instalemos multer
-import { Prisma } from '@/generated/prisma/client';
-import { AppError, type CodigoError } from '@/utils/errores.utils';
-import { responder } from '@/utils/respuestas.utils';
-import { logger } from '@/utils/logger.utils';
-import { config } from '@/config/servidor.config';
+import { Prisma } from '@/generated/prisma/client.js';
+import { AppError, type CodigoError } from '@/utils/errores.utils.js';
+import { responder } from '@/utils/respuestas.utils.js';
+import { logger } from '@/utils/logger.utils.js';
+import { config } from '@/config/servidor.config.js';
 
 // ── Traductor de errores de Prisma ────────────────────────────────────────────
 
@@ -118,13 +118,13 @@ export function errorMiddleware(
   }*/
 
   // 4a — Token JWT expirado
-  if (err instanceof TokenExpiredError) {
+  if (err instanceof jwt.TokenExpiredError) {
     responder._error(res, StatusCodes.UNAUTHORIZED, 'El token ha expirado', 'UNAUTHORIZED');
     return;
   }
 
   // 4b — Token JWT malformado o firma incorrecta
-  if (err instanceof JsonWebTokenError) {
+  if (err instanceof jwt.JsonWebTokenError) {
     responder._error(res, StatusCodes.UNAUTHORIZED, 'Token inválido', 'UNAUTHORIZED');
     return;
   }

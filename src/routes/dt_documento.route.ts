@@ -1,9 +1,9 @@
 import { Router } from 'express';
 import multer from 'multer';
 import { z } from 'zod';
-import dtDocumentoController from '@/controllers/dt_documento.controller';
-import { validar } from '@/middlewares/validar.middleware';
-import { subirDocumentoSchema } from '@/schemas/dt_documento.schemas';
+import dtDocumentoController from '@/controllers/dt_documento.controller.js';
+import { validar } from '@/middlewares/validar.middleware.js';
+import { subirDocumentoSchema } from '@/schemas/dt_documento.schemas.js';
 
 const router = Router();
 

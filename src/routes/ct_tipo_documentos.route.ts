@@ -1,12 +1,12 @@
 import { Router } from 'express';
-import ctTipoDocumentoController from '@/controllers/ct_tipo_documento.controller';
-import { validar } from '@/middlewares/validar.middleware';
+import ctTipoDocumentoController from '@/controllers/ct_tipo_documento.controller.js';
+import { validar } from '@/middlewares/validar.middleware.js';
 import {
   crearCtTipoDocumentoSchema,
   actualizarCtTipoDocumentoSchema,
   filtrosCtTipoDocumentoSchema,
   crearCtTipoDocumentosLoteSchema,
-} from '@/schemas/ct_tipo_documento.schemas';
+} from '@/schemas/ct_tipo_documento.schemas.js';
 
 const router = Router();
 
