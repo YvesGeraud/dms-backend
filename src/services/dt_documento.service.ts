@@ -20,8 +20,9 @@ class DtDocumentoService {
    *   2. Valida que el archivo cumple las reglas del tipo (ext + tamaño)
    *   3. Resuelve y crea la carpeta destino según el módulo y el rupeet
    *   4. Calcula el hash SHA-256 del archivo (deduplicación)
-   *   5. Escribe en disco (omite escritura si es duplicado)
-   *   6. Persiste el registro en dt_documento
+   *   5. Si el hash ya existe en BD, reutiliza el registro pero igual escribe el
+   *      archivo en la carpeta del módulo/rupeet actual (evita carpeta vacía).
+   *   6. Si es contenido nuevo: persiste el registro en dt_documento
    *
    * @param datos      - IDs validados por Zod desde el body multipart
    * @param archivo    - Archivo en memoria (memoryStorage de Multer)
@@ -55,18 +56,20 @@ class DtDocumentoService {
     const nombreSistema = `${hash}${ext}`;
 
     // ── 5. Deduplicación en BD: si ya existe un registro activo con el mismo
-    //       hash, retornamos ese directamente sin tocar disco ni insertar nada.
-    //       Si existe pero está inactivo (estado=false), continuamos normalmente.
+    //       hash, reutilizamos ese registro (un solo dt_documento por contenido).
+    //       Aun así debemos asegurar el archivo en disco en la carpeta de ESTE
+    //       módulo/rupeet: si no, la segunda subida del mismo archivo no dejaba
+    //       copia en uploads/sistema/Proni/{rupeet}/ y parecía "no guardar".
     const existente = await prisma.dt_documento.findFirst({
       where: { hash, estado: true },
     });
 
+    // ── 6. Escribir a disco (siempre que haya buffer: nuevo o duplicado en BD) ─
+    const { ruta } = await guardarArchivoDesdeMemoria(archivo.buffer, directorio, nombreSistema);
+
     if (existente) {
       return { ...existente, duplicado: true };
     }
-
-    // ── 6. Escribir a disco (solo si el contenido es nuevo en BD) ────────────
-    const { ruta } = await guardarArchivoDesdeMemoria(archivo.buffer, directorio, nombreSistema);
 
     // Ruta relativa desde la raíz del proyecto (para portabilidad entre entornos)
     // Ej: uploads/comun/3/abc123...def.pdf
