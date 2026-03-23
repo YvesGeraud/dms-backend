@@ -76,7 +76,7 @@ class CtTipoDocumentoService {
 
     return prisma.ct_tipo_documento.update({
       where: { id_ct_tipo_documento: id },
-      data: datos,
+      data: { ...datos, id_ct_usuario_up },
     });
   }
 

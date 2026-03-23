@@ -90,12 +90,12 @@ app.get(`${base}health`, async (_req, res) => {
       entorno: config.nodeEnv,
       base_datos: 'conectada',
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       estado: 'error',
       entorno: config.nodeEnv,
       base_datos: 'desconectada',
-      mensaje: error.message,
+      mensaje: error instanceof Error ? error.message : String(error),
     });
   }
 });

@@ -1,13 +1,5 @@
 type NodeEnv = 'development' | 'test' | 'production';
 
-function requerida(nombre: string): string {
-  const valor = process.env[nombre];
-  if (!valor || valor.trim() === '') {
-    throw new Error(`Variable de entorno requerida: ${nombre}`);
-  }
-  return valor;
-}
-
 function opcional(nombre: string, porDefecto: string): string {
   const valor = process.env[nombre];
   return valor && valor.trim() !== '' ? valor : porDefecto;
