@@ -1,5 +1,6 @@
 import { PrismaClient } from "@/generated/prisma/client";
 import { crearAdapterPrisma } from "./prisma-adapter";
+import { config } from '@/config/servidor.config';
 
 declare global {
   var prisma: PrismaClient | undefined;
@@ -12,8 +13,8 @@ class DatabaseConfig {
 
   public static obtenerInstancia(): PrismaClient {
     if (!DatabaseConfig.instancia) {
-      // Tomamos siempre DATABASE_URL como prioridad (usado en los otros sistemas)
-      const databaseUrl = process.env.DATABASE_URL || "";
+      // Tomamos la URL ya sintetizada de servidor.config.ts para que no lance error si falta en el .env
+      const databaseUrl = config.db.url;
       
       const adapter = crearAdapterPrisma(databaseUrl);
 
