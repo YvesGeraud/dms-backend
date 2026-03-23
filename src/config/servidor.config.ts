@@ -44,7 +44,7 @@ export const config = {
   nodeEnv,
   esProduccion: nodeEnv === 'production',
   puerto: numero('PORT', 3000),
-  uploadPath: opcional('UPLOAD_PATH', 'uploads'),
+  uploadPath: opcional('UPLOAD_BASE_PATH', 'uploads'),
   apiUrl: opcional('API_URL', 'http://localhost:3000'),
   basePath: opcional('HOST', '/'), // local: "/", servidor: "/app/dms/"
 
