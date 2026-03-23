@@ -48,6 +48,14 @@ const nodeEnv = unoDe<NodeEnv>(
   'development',
 );
 
+const dbHost = process.env.DB_HOST_OVERRIDE || opcional('DB_HOST', 'db');
+const dbPort = numero('DB_PORT', 3306);
+const dbName = opcional('DBNAMES', 'dms');
+const dbUser = opcional('DB_USER', 'root');
+const dbPassword = opcional('DB_PASSWORD', 'root');
+
+const defaultUrl = `mysql://${encodeURIComponent(dbUser)}:${encodeURIComponent(dbPassword)}@${dbHost}:${dbPort}/${dbName}`;
+
 export const config = {
   nodeEnv,
   esProduccion: nodeEnv === 'production',
@@ -57,12 +65,12 @@ export const config = {
   basePath: opcional('HOST', '/'), // local: "/", servidor: "/app/dms/"
 
   db: {
-    url: opcional('DATABASE_URL', 'mysql://root:root@db:3306/dms'),
-    host: process.env.DB_HOST_OVERRIDE || opcional('DB_HOST', 'db'),
-    port: numero('DB_PORT', 3306),
-    nombre: opcional('DBNAMES', 'dms'),
-    usuario: opcional('DB_USER', 'root'),
-    password: opcional('DB_PASSWORD', 'root'),
+    url: opcional('DATABASE_URL', defaultUrl),
+    host: dbHost,
+    port: dbPort,
+    nombre: dbName,
+    usuario: dbUser,
+    password: dbPassword,
   },
 
   cors: {
