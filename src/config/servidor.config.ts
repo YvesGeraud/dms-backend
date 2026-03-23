@@ -57,11 +57,11 @@ export const config = {
   basePath: opcional('HOST', '/'), // local: "/", servidor: "/app/dms/"
 
   db: {
-    url: requerida('DATABASE_URL'),
-    host: opcional('DB_HOST', 'localhost'),
-    port: numero('DB_PORT', 3306),
-    nombre: opcional('DB_NAME', 'restaurante'),
-    usuario: opcional('DB_USER', 'root'),
+    url: opcional('DATABASE_URL', ''),
+    host: opcional('DB_HOST', ''),
+    port: numero('DB_PORT', 0),
+    nombre: opcional('DB_NAME', ''),
+    usuario: opcional('DB_USER', ''),
     password: opcional('DB_PASSWORD', ''),
   },
 
