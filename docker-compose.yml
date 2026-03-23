@@ -25,15 +25,7 @@ services:
     working_dir: /usr/src/app
     ports:
       - "3000:3000"
-    environment:
-      - NODE_ENV=development
-      - DATABASE_URL=mysql://root:root@db:3306/dms
-      - UPLOAD_PATH=uploads
-      - DB_HOST=db
-      - DB_PORT=3306
-      - DB_NAME=dms
-      - DB_USER=root
-      - DB_PASSWORD=root
+    env_file: .env
     depends_on:
       db:
         condition: service_healthy
