@@ -1,3 +1,9 @@
+import * as dotenv from 'dotenv';
+import * as dotenvExpand from 'dotenv-expand';
+
+const env = dotenv.config();
+dotenvExpand.expand(env);
+
 type NodeEnv = 'development' | 'test' | 'production';
 
 function requerida(nombre: string): string {

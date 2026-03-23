@@ -13,10 +13,7 @@ function crearCliente(): PrismaClient {
     database: config.db.nombre,
     user: config.db.usuario,
     password: config.db.password,
-    connectionLimit: config.esProduccion ? 20 : 5,
-    acquireTimeout: 8_000,
-    idleTimeout: 600_000,
-    connectTimeout: 5_000,
+    connectionLimit: 5,
   });
 
   return new PrismaClient({
