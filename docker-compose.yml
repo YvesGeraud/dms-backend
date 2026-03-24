@@ -1,0 +1,42 @@
+name: dms_dev
+
+services:
+  db:
+    image: mariadb:11.4
+    container_name: dms_db
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: dms
+    ports:
+      - '3306:3306'
+    volumes:
+      - db_data:/var/lib/mysql
+    command: >
+      --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test: [ 'CMD', 'mariadb-admin', 'ping', '-h', '127.0.0.1', '-uroot', '-proot' ]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  backend:
+    image: node:lts-alpine
+    container_name: dms_backend
+    working_dir: /usr/src/app
+    ports:
+      - "3000:3000"
+    env_file: .env
+    environment:
+      - DB_HOST=db
+      - DATABASE_URL=mysql://root:root@db:3306/dms
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - .:/usr/src/app
+      - node_modules:/usr/src/app/node_modules
+    command: sh -lc "npm install && npm run db:generate && npm run dev"
+
+volumes:
+  db_data:
+  node_modules:

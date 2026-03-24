@@ -1,0 +1,57 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model ct_tipo_documento {
+  id_ct_tipo_documento   Int       @id @default(autoincrement())
+  clave                  String    @unique(map: "clave") @default("") @db.VarChar(50)
+  descripcion            String    @default("") @db.VarChar(255)
+  max_size_bytes         Int
+  extensiones_permitidas String    @default("pdf,jpg,png") @db.VarChar(255)
+  estado                 Boolean   @default(true)
+  modulo                 String    @db.VarChar(100)
+  fecha_in               DateTime  @default(now()) @db.DateTime(0)
+  fecha_up               DateTime? @db.DateTime(0)
+  id_ct_usuario_in       Int
+  id_ct_usuario_up       Int?
+
+  documentos dt_documento[]
+
+  @@index([id_ct_usuario_in], map: "ct_usuario_in")
+  @@index([id_ct_usuario_up], map: "ct_usuario_up")
+  @@index([estado], map: "estado")
+}
+
+model dt_documento {
+  id_dt_documento      Int       @id @default(autoincrement())
+  nombre_original      String    @db.VarChar(255)
+  nombre_sistema       String    @db.VarChar(255)
+  ruta_relativa        String    @db.VarChar(500)
+  mime_type            String    @db.VarChar(100)
+  tama_o_bytes         Int       @map("tamaño_bytes")
+  hash                 String    @db.VarChar(64)
+  id_ct_tipo_documento Int
+  estado               Boolean   @default(true)
+  fecha_in             DateTime  @default(now()) @db.DateTime(0)
+  fecha_up             DateTime? @db.DateTime(0)
+  id_ct_usuario_in     Int
+  id_ct_usuario_up     Int?
+
+  ct_tipo_documento ct_tipo_documento @relation(fields: [id_ct_tipo_documento], references: [id_ct_tipo_documento], map: "fk_dt_documento_tipo")
+
+  @@index([hash], map: "idx_hash")
+  @@index([estado], map: "estado")
+  @@index([id_ct_tipo_documento], map: "idx_id_ct_tipo_documento")
+  @@index([id_ct_usuario_in], map: "id_ct_usuario_in")
+  @@index([id_ct_usuario_up], map: "id_ct_usuario_up")
+}
