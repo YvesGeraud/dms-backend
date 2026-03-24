@@ -51,7 +51,9 @@ publish_prod:
     - echo "Limpieza atómica y reinicio Passenger en Backend Prod"
     - rm -rf $DEPLOY/$FOLDER
     - mkdir -p $DEPLOY/$FOLDER/tmp
-    - cd $DEPLOY/$FOLDER
-    - npm ci --omit=dev
+    - cp dist
+    - cp package*.json
+    - cd
+    - npm ci
     - cp -rf $CI_PROJECT_DIR/dist/. $DEPLOY/$FOLDER/
     - touch $DEPLOY/$FOLDER/tmp/restart.txt
