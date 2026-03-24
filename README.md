@@ -1,4 +1,4 @@
-# DMS Para el precioso Yves Gerardo 
+# DMS Para el precioso Yves GERARDO MENDOZA 
 
 
 
