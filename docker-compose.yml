@@ -26,6 +26,9 @@ services:
     ports:
       - "3000:3000"
     env_file: .env
+    environment:
+      - DB_HOST=db
+      - DATABASE_URL=mysql://root:root@db:3306/dms
     depends_on:
       db:
         condition: service_healthy
