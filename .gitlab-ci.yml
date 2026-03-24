@@ -3,12 +3,12 @@ stages:
   - build
   - publish
 
-dependences_uat:
+dependences_prod:
   stage: dependences
   rules:
-    - if: $CI_COMMIT_BRANCH == "uat"
+    - if: $CI_COMMIT_BRANCH == "main"
   tags:
-    - uat
+    - [prod-apps]
   cache:
     key:
       files:
@@ -18,12 +18,12 @@ dependences_uat:
   script:
     - npm install
 
-build_uat:
+build_prod:
   stage: build
   rules:
-    - if: $CI_COMMIT_BRANCH == "uat"
+    - if: $CI_COMMIT_BRANCH == "main"
   tags:
-    - uat
+    - [prod-apps]
   cache:
     - key:
         files:
@@ -38,15 +38,15 @@ build_uat:
     - npm run build
     - cp -f .env dist/
 
-publish_uat:
+publish_prod:
   variables:
-    DEPLOY: "/var/www/api-uat"
+    DEPLOY: "/var/www/"
     FOLDER: "dms"
   stage: publish
   rules:
-    - if: $CI_COMMIT_BRANCH == "uat"
+    - if: $CI_COMMIT_BRANCH == "main"
   tags:
-    - uat
+    - [prod-apps]
   cache:
     - key:
         files:
@@ -57,7 +57,7 @@ publish_uat:
       paths:
         - dist
   script:
-    - echo "Desplegando a uat"
+    - echo "Desplegando a main"
     - mkdir -p $DEPLOY/$FOLDER/
     - rm -rf $DEPLOY/$FOLDER/*
     - cp -rf $CI_PROJECT_DIR/node_modules/ $DEPLOY/$FOLDER/
