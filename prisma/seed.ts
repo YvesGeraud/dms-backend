@@ -8,121 +8,225 @@ async function main() {
 
   // Limpiar datos existentes (en orden inverso por las relaciones)
   console.log('🧹 Limpiando datos existentes...');
-  await prisma.ct_tipo_documento.deleteMany();
   await prisma.dt_documento.deleteMany();
+  await prisma.ct_tipo_documento.deleteMany();
 
   console.log('✅ Datos limpiados');
 
-  // Crear categorías con upsert (crea o actualiza si existe)
-  const tiposDocumento = await Promise.all([
-    prisma.ct_tipo_documento.upsert({
-      where: { clave: 'IDENTIFICACION_OFICIAL' },
-      update: {},
-      create: {
-        clave: 'IDENTIFICACION_OFICIAL',
-        descripcion: 'Identificación oficial vigente (INE, pasaporte, cédula)',
-        max_size_bytes: 5_242_880, // 5 MB
-        extensiones_permitidas: JSON.stringify(['pdf', 'jpg', 'jpeg', 'png']),
-        id_ct_usuario_in: 1,
-      },
-    }),
-    prisma.ct_tipo_documento.upsert({
-      where: { clave: 'COMPROBANTE_DOMICILIO' },
-      update: {},
-      create: {
-        clave: 'COMPROBANTE_DOMICILIO',
-        descripcion: 'Comprobante de domicilio no mayor a 3 meses',
-        max_size_bytes: 5_242_880,
-        extensiones_permitidas: JSON.stringify(['pdf', 'jpg', 'jpeg', 'png']),
-        id_ct_usuario_in: 1,
-      },
-    }),
-    prisma.ct_tipo_documento.upsert({
-      where: { clave: 'ACTA_CONSTITUTIVA' },
-      update: {},
-      create: {
-        clave: 'ACTA_CONSTITUTIVA',
-        descripcion: 'Acta constitutiva de la empresa',
-        max_size_bytes: 10_485_760, // 10 MB
-        extensiones_permitidas: JSON.stringify(['pdf']),
-        id_ct_usuario_in: 1,
-      },
-    }),
-    prisma.ct_tipo_documento.upsert({
-      where: { clave: 'CONTRATO' },
-      update: {},
-      create: {
-        clave: 'CONTRATO',
-        descripcion: 'Contrato firmado entre las partes',
-        max_size_bytes: 10_485_760,
-        extensiones_permitidas: JSON.stringify(['pdf']),
-        id_ct_usuario_in: 1,
-      },
-    }),
-    prisma.ct_tipo_documento.upsert({
-      where: { clave: 'FACTURA' },
-      update: {},
-      create: {
-        clave: 'FACTURA',
-        descripcion: 'Factura electrónica (CFDI)',
-        max_size_bytes: 2_097_152, // 2 MB
-        extensiones_permitidas: JSON.stringify(['pdf', 'xml']),
-        id_ct_usuario_in: 1,
-      },
-    }),
-    prisma.ct_tipo_documento.upsert({
-      where: { clave: 'IMAGEN_GENERAL' },
-      update: {},
-      create: {
-        clave: 'IMAGEN_GENERAL',
-        descripcion: 'Imagen de uso general',
-        max_size_bytes: 8_388_608, // 8 MB
-        extensiones_permitidas: JSON.stringify(['jpg', 'jpeg', 'png', 'webp', 'gif']),
-        id_ct_usuario_in: 1,
-      },
-    }),
-    prisma.ct_tipo_documento.upsert({
-      where: { clave: 'imagenes' },
-      update: {},
-      create: {
-        clave: 'imagenes',
-        descripcion: 'Ruta general para imágenes del sistema',
-        max_size_bytes: 2_097_152, // 2 MB (según tu ruta)
-        extensiones_permitidas: JSON.stringify(['jpg', 'jpeg', 'png', 'webp', 'gif']),
-        id_ct_usuario_in: 1,
-      },
-    }),
-    prisma.ct_tipo_documento.upsert({
-      where: { clave: 'documentos' },
-      update: {},
-      create: {
-        clave: 'documentos',
-        descripcion: 'Ruta general para documentos PDF/TXT',
-        max_size_bytes: 10_485_760, // 10 MB (según ruta)
-        extensiones_permitidas: JSON.stringify(['pdf', 'txt', 'csv']),
-        id_ct_usuario_in: 1,
-      },
-    }),
-    prisma.ct_tipo_documento.upsert({
-      where: { clave: 'excel' },
-      update: {},
-      create: {
-        clave: 'excel',
-        descripcion: 'Ruta general para documentos Excel',
-        max_size_bytes: 5_242_880, // 5 MB
-        extensiones_permitidas: JSON.stringify(['xlsx']),
-        id_ct_usuario_in: 1,
-      },
-    }),
-  ]);
+  const documentosData = [
+    {
+      clave: 'acta_nacimiento',
+      descripcion: 'Acta de nacimiento',
+      max_size_bytes: 524288,
+      extensiones_permitidas: JSON.stringify(['pdf']),
+      modulo: 'comun',
+      id_ct_usuario_in: 1,
+    },
+    {
+      clave: 'curp',
+      descripcion: 'Curp actualizado',
+      max_size_bytes: 524288,
+      extensiones_permitidas: JSON.stringify(['pdf']),
+      modulo: 'comun',
+      id_ct_usuario_in: 1,
+    },
+    {
+      clave: 'ine',
+      descripcion: 'Ine escaneada',
+      max_size_bytes: 524288,
+      extensiones_permitidas: JSON.stringify(['pdf']),
+      modulo: 'comun',
+      id_ct_usuario_in: 1,
+    },
+    {
+      clave: 'comprobante_domicilio',
+      descripcion: 'Comprobante de domicilio no mayor a tres meses',
+      max_size_bytes: 524288,
+      extensiones_permitidas: JSON.stringify(['pdf']),
+      modulo: 'comun',
+      id_ct_usuario_in: 1,
+    },
+    {
+      clave: 'comprobante_estudios',
+      descripcion: 'Comprobante de estudios',
+      max_size_bytes: 524288,
+      extensiones_permitidas: JSON.stringify(['pdf']),
+      modulo: 'comun',
+      id_ct_usuario_in: 1,
+    },
+    {
+      clave: 'ultimo_comprobante_estudios',
+      descripcion: 'Ultimo comprobante de estudios',
+      max_size_bytes: 524288,
+      extensiones_permitidas: JSON.stringify(['pdf']),
+      modulo: 'comun',
+      id_ct_usuario_in: 1,
+    },
+    {
+      clave: 'titulo_profesional',
+      descripcion: 'Titulo profesional',
+      max_size_bytes: 524288,
+      extensiones_permitidas: JSON.stringify(['pdf']),
+      modulo: 'comun',
+      id_ct_usuario_in: 1,
+    },
+    {
+      clave: 'cedula_profesional',
+      descripcion: 'Cédula profesional',
+      max_size_bytes: 524288,
+      extensiones_permitidas: JSON.stringify(['pdf']),
+      modulo: 'comun',
+      id_ct_usuario_in: 1,
+    },
+    {
+      clave: 'constancia_fiscal',
+      descripcion: 'Constancia de situación fiscal',
+      max_size_bytes: 524288,
+      extensiones_permitidas: JSON.stringify(['pdf']),
+      modulo: 'comun',
+      id_ct_usuario_in: 1,
+    },
+    {
+      clave: 'carta_compromiso',
+      descripcion: 'Carta compromiso del facilitador y diagnosticado',
+      max_size_bytes: 786432,
+      extensiones_permitidas: JSON.stringify(['pdf']),
+      modulo: 'aneec',
+      id_ct_usuario_in: 1,
+    },
+    {
+      clave: 'priv_diagnosticado',
+      descripcion: 'privacidad de diagnosticado',
+      max_size_bytes: 524288,
+      extensiones_permitidas: JSON.stringify(['pdf']),
+      modulo: 'aneec',
+      id_ct_usuario_in: 1,
+    },
+    {
+      clave: 'diagnostico',
+      descripcion: 'Diagnostico del diagnosticado',
+      max_size_bytes: 524288,
+      extensiones_permitidas: JSON.stringify(['pdf']),
+      modulo: 'aneec',
+      id_ct_usuario_in: 1,
+    },
+    {
+      clave: 'aviso_privacidad',
+      descripcion: 'Aviso de privacidad del facilitador y diagnosticado',
+      max_size_bytes: 524288,
+      extensiones_permitidas: JSON.stringify(['pdf']),
+      modulo: 'aneec',
+      id_ct_usuario_in: 1,
+    },
+    {
+      clave: 'informe',
+      descripcion: 'Informes de diagnosticados',
+      max_size_bytes: 524288,
+      extensiones_permitidas: JSON.stringify(['pdf']),
+      modulo: 'aneec',
+      id_ct_usuario_in: 1,
+    },
+    {
+      clave: 'carga_participantes',
+      descripcion: 'Datos de constancia',
+      max_size_bytes: 786432,
+      extensiones_permitidas: JSON.stringify(['xls', 'xlsm', 'xlsb']),
+      modulo: 'constancias',
+      id_ct_usuario_in: 1,
+    },
+    {
+      clave: 'horario',
+      descripcion: 'Horarios por periodo',
+      max_size_bytes: 524288,
+      extensiones_permitidas: JSON.stringify(['pdf']),
+      modulo: 'proni',
+      id_ct_usuario_in: 1,
+    },
+    {
+      clave: 'foto',
+      descripcion: 'Evidencia fotografica',
+      max_size_bytes: 524288,
+      extensiones_permitidas: JSON.stringify(['png', 'jpeg', 'gif', 'svg']),
+      modulo: 'proni',
+      id_ct_usuario_in: 1,
+    },
+    {
+      clave: 'planeacion',
+      descripcion: 'Planeaciones de clase',
+      max_size_bytes: 524288,
+      extensiones_permitidas: JSON.stringify(['pdf']),
+      modulo: 'proni',
+      id_ct_usuario_in: 1,
+    },
+    {
+      clave: 'oficio_presentacion',
+      descripcion: 'Oficio de presentación',
+      max_size_bytes: 524288,
+      extensiones_permitidas: JSON.stringify(['pdf']),
+      modulo: 'proni',
+      id_ct_usuario_in: 1,
+    },
+    {
+      clave: 'constancia_asistencia',
+      descripcion: 'Constancia de asistencia',
+      max_size_bytes: 524288,
+      extensiones_permitidas: JSON.stringify(['pdf']),
+      modulo: 'proni',
+      id_ct_usuario_in: 1,
+    },
+    {
+      clave: 'Formato_factura_',
+      descripcion: 'Formato de factura para altas y bajas',
+      max_size_bytes: 524288,
+      extensiones_permitidas: JSON.stringify(['pdf']),
+      modulo: 'infraestructura',
+      id_ct_usuario_in: 1,
+    },
+    {
+      clave: 'Formato_salidas',
+      descripcion: 'Formato de salidas',
+      max_size_bytes: 524288,
+      extensiones_permitidas: JSON.stringify(['pdf']),
+      modulo: 'consumibles',
+      id_ct_usuario_in: 1,
+    },
+    {
+      clave: 'archivo_actualizacion',
+      descripcion: 'Registro de archivos actualizafos de escalafon',
+      max_size_bytes: 524288,
+      extensiones_permitidas: JSON.stringify(['pdf']),
+      modulo: 'escalafon',
+      id_ct_usuario_in: 1,
+    },
+    {
+      clave: 'archivo_nuevo',
+      descripcion: 'Archivo de correspondencia nueva',
+      max_size_bytes: 524288,
+      extensiones_permitidas: JSON.stringify(['pdf']),
+      modulo: 'correspondencia',
+      id_ct_usuario_in: 1,
+    },
+    {
+      clave: 'respuesta',
+      descripcion: 'Respuesta de correspondecia',
+      max_size_bytes: 524288,
+      extensiones_permitidas: JSON.stringify(['pdf']),
+      modulo: 'correspondencia',
+      id_ct_usuario_in: 1,
+    },
+  ];
+
+  for (const doc of documentosData) {
+    await prisma.ct_tipo_documento.upsert({
+      where: { clave: doc.clave },
+      update: doc,
+      create: doc,
+    });
+  }
 
   console.log('✅ Tipos de documento creados');
 
   console.log('🎉 Seed completado exitosamente!');
-  console.log('\n📋 Datos de acceso:');
-  console.log('   👤 Usuario mesero: mesero1');
-  console.log('   👤 Usuario cocinero: cocinero1');
-  console.log('   🔑 Contraseña para ambos: password123');
 }
 
 main()
