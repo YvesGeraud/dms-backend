@@ -93,6 +93,32 @@ class DtDocumentoService {
   }
 
   /**
+   * Sube un lote de archivos al sistema.
+   * Ejecuta subidas individuales en paralelo, reutilizando la validación
+   * y deduplicación por archivo. Si alguno falla (ej. extensión inválida),
+   * Express manejará el error e interrumpirá la ejecución.
+   *
+   * @param datos      - IDs comunes (mismo tipo de documento y usuario para todos)
+   * @param archivos   - Array de archivos en memoria
+   * @param idUsuario  - Id del usuario que sube los archivos
+   */
+  async subirDocumentosBatch(
+    datos: SubirDocumentoDTO,
+    archivos: Express.Multer.File[],
+    idUsuario: number
+  ) {
+    // Si necesitas validar el tipo de documento una sola vez para ahorro de CPU/DB,
+    // podrías refactorizar `subirDocumento` para inyectar `tipodoc`.
+    // Por simplicidad y reuso total, ejecutamos en Promise.all:
+    const operaciones = archivos.map((archivo) =>
+      this.subirDocumento(datos, archivo, idUsuario)
+    );
+
+    // Se ejecutan las subidas concurrentemente
+    return Promise.all(operaciones);
+  }
+
+  /**
    * Localiza un documento en BD y retorna su ruta absoluta para streaming.
    *
    * @param hash - hash del documento
