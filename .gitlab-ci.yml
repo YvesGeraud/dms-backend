@@ -3,12 +3,12 @@ stages:
   - build
   - publish
 
-dependences_dev:
+dependences_uat:
   stage: dependences
   rules:
-    - if: $CI_COMMIT_BRANCH == "dev"
+    - if: $CI_COMMIT_BRANCH == "uat"
   tags:
-    - dev
+    - uat
   cache:
     key:
       files:
@@ -18,12 +18,12 @@ dependences_dev:
   script:
     - npm install
 
-build_dev:
+build_uat:
   stage: build
   rules:
-    - if: $CI_COMMIT_BRANCH == "dev"
+    - if: $CI_COMMIT_BRANCH == "uat"
   tags:
-    - dev
+    - uat
   cache:
     - key:
         files:
@@ -38,15 +38,15 @@ build_dev:
     - npm run build
     - cp -f .env dist/
 
-publish_dev:
+publish_uat:
   variables:
-    DEPLOY: "/var/www/api-dev"
+    DEPLOY: "/var/www/api-uat"
     FOLDER: "dms"
   stage: publish
   rules:
-    - if: $CI_COMMIT_BRANCH == "dev"
+    - if: $CI_COMMIT_BRANCH == "uat"
   tags:
-    - dev
+    - uat
   cache:
     - key:
         files:
@@ -57,7 +57,7 @@ publish_dev:
       paths:
         - dist
   script:
-    - echo "Desplegando a dev"
+    - echo "Desplegando a uat"
     - mkdir -p $DEPLOY/$FOLDER/
     - rm -rf $DEPLOY/$FOLDER/*
     - cp -rf $CI_PROJECT_DIR/node_modules/ $DEPLOY/$FOLDER/
