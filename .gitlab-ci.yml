@@ -36,7 +36,7 @@ build_prod:
   artifacts:
     paths:
       - dist/
-      - node_modules/
+      
     expire_in: 30 min
 
 publish_prod:
