@@ -29,6 +29,7 @@ CREATE TABLE `dt_documento` (
     `tamaño_bytes` INTEGER NOT NULL,
     `hash` VARCHAR(64) NOT NULL,
     `id_ct_tipo_documento` INTEGER NOT NULL,
+    `id_ct_usuario` INTEGER NOT NULL,
     `estado` BOOLEAN NOT NULL DEFAULT true,
     `fecha_in` DATETIME(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
     `fecha_up` DATETIME(0) NULL,
@@ -38,6 +39,7 @@ CREATE TABLE `dt_documento` (
     INDEX `idx_hash`(`hash`),
     INDEX `estado`(`estado`),
     INDEX `idx_id_ct_tipo_documento`(`id_ct_tipo_documento`),
+    INDEX `idx_id_ct_usuario`(`id_ct_usuario`),
     INDEX `id_ct_usuario_in`(`id_ct_usuario_in`),
     INDEX `id_ct_usuario_up`(`id_ct_usuario_up`),
     PRIMARY KEY (`id_dt_documento`)

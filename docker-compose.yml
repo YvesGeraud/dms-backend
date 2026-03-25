@@ -14,7 +14,7 @@ services:
     command: >
       --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     healthcheck:
-      test: [ 'CMD', 'mariadb-admin', 'ping', '-h', '127.0.0.1', '-uroot', '-proot' ]
+      test: ['CMD', 'mariadb-admin', 'ping', '-h', '127.0.0.1', '-uroot', '-proot']
       interval: 5s
       timeout: 3s
       retries: 30
@@ -24,7 +24,7 @@ services:
     container_name: dms_backend
     working_dir: /usr/src/app
     ports:
-      - "3000:3000"
+      - '3000:3000'
     env_file: .env
     environment:
       - DB_HOST=db

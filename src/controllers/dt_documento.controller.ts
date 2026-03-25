@@ -89,12 +89,16 @@ class DtDocumentoController {
     const idsQuery = req.query['ids'] as string;
     const idParam = req.params['id'];
     const estado = req.query['estado'] !== '0';
+    const conCarpetas = req.query['carpetas'] === 'true';
 
     let ids: number[] = [];
 
     if (idsQuery) {
       // Maneja ?ids=1,2,3
-      ids = idsQuery.split(',').map(Number).filter((id) => !isNaN(id));
+      ids = idsQuery
+        .split(',')
+        .map(Number)
+        .filter((id) => !isNaN(id));
     } else if (idParam) {
       // Maneja /tipo/:id/descargar
       const id = Number(idParam);
@@ -111,10 +115,20 @@ class DtDocumentoController {
       throw new ErrorNegocio('No se encontraron documentos para los tipos y estado solicitados.');
     }
 
-    const archivos = documentos.map((doc) => ({
-      rutaAbsoluta: doc.rutaAbsoluta,
-      nombreDeseado: doc.nombre_original,
-    }));
+    const archivos = documentos.map((doc) => {
+      let nombreDeseado = doc.nombre_original;
+
+      if (conCarpetas) {
+        // Estructura: modulo/id_usuario/archivo.ext
+        const modulo = doc.ct_tipo_documento.modulo.replace(/\s+/g, '_').toLowerCase();
+        nombreDeseado = `${modulo}/${doc.id_ct_usuario}/${doc.nombre_original}`;
+      }
+
+      return {
+        rutaAbsoluta: doc.rutaAbsoluta,
+        nombreDeseado,
+      };
+    });
 
     // El nombre del ZIP será descriptivo
     let nombreZip = 'documentos';
@@ -126,6 +140,19 @@ class DtDocumentoController {
     }
 
     await comprimirArchivos(res, archivos, nombreZip);
+  }
+
+  /**
+   * DELETE /api/dt_documento/:hash
+   *
+   * Realiza un borrado lógico del documento.
+   */
+  async eliminar(req: Request, res: Response): Promise<void> {
+    const hash = req.params['hash'] as string;
+
+    await dtDocumentoService.desactivarPorHash(hash);
+
+    responder.ok(res, null, 'Documento eliminado exitosamente');
   }
 }
 

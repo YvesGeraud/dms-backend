@@ -24,7 +24,6 @@ export const subirDocumentoSchema = z.object({
       .number({ error: 'id_ct_usuario es requerido' })
       .int()
       .positive('id_ct_usuario debe ser un número positivo'),
-
   }),
 });
 

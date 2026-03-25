@@ -47,17 +47,15 @@ router.post(
   '/subir-batch',
   memoriaUpload.array('archivos', 10), // multer deja un array de buffers en req.files
   validar(subirDocumentoSchema), // usa la misma validación de metadata
-  dtDocumentoController.subirBatch, 
+  dtDocumentoController.subirBatch,
 );
 
 /**
- * GET /api/dt_documento/:hash/descargar?inline=true
+ * GET /api/dt_documento/lote/descargar?ids=1,2,3&estado=1&carpetas=true
  *
- * Descarga un documento mediante ReadStream (sin cargarlo en RAM).
- *   - inline=true  → el navegador muestra el archivo (PDF, imágenes)
- *   - inline=false → fuerza descarga con el nombre original del archivo
+ * Descarga documentos de múltiples tipos en un solo ZIP.
  */
-router.get('/:hash/descargar', validar(hashParamSchema), dtDocumentoController.descargar);
+router.get('/lote/descargar', dtDocumentoController.descargarPorTipo);
 
 /**
  * GET /api/dt_documento/tipo/:id/descargar
@@ -69,10 +67,19 @@ router.get('/:hash/descargar', validar(hashParamSchema), dtDocumentoController.d
 router.get('/tipo/:id/descargar', dtDocumentoController.descargarPorTipo);
 
 /**
- * GET /api/dt_documento/lote/descargar?ids=1,2,3&estado=1
+ * GET /api/dt_documento/:hash/descargar?inline=true
  *
- * Descarga documentos de múltiples tipos en un solo ZIP.
+ * Descarga un documento mediante ReadStream (sin cargarlo en RAM).
+ *   - inline=true  → el navegador muestra el archivo (PDF, imágenes)
+ *   - inline=false → fuerza descarga con el nombre original del archivo
  */
-router.get('/lote/descargar', dtDocumentoController.descargarPorTipo);
+router.get('/:hash/descargar', validar(hashParamSchema), dtDocumentoController.descargar);
+
+/**
+ * DELETE /api/dt_documento/:hash
+ *
+ * Realiza un borrado lógico del documento.
+ */
+router.delete('/:hash', validar(hashParamSchema), dtDocumentoController.eliminar);
 
 export default router;

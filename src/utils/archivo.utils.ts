@@ -324,8 +324,6 @@ export const EXTENSION_A_MIME: Record<string, string> = {
   '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 };
 
-
-
 /**
  * Forma que expone Prisma para el registro de ct_tipo_documento.
  * Solo los campos que necesita la validación — evita importar el cliente Prisma aquí.
@@ -399,7 +397,7 @@ export function calcularHashBuffer(buffer: Buffer): string {
  */
 export function resolverRutaModulo(moduloCampo: string, idUsuario: number): string {
   const mod = moduloCampo.trim();
-  
+
   if (!mod) {
     throw new ErrorNegocio('El tipo de documento no tiene un módulo válido asignado.');
   }
@@ -407,9 +405,7 @@ export function resolverRutaModulo(moduloCampo: string, idUsuario: number): stri
   // Regla de carpetas:
   // - Si el módulo es "comun", va a uploads/comun/{idUsuario}
   // - Si es ajeno a comun (ej. "Proni"), va a uploads/sistema/{modulo}/{idUsuario}
-  const segmentos = mod.toLowerCase() === 'comun' 
-    ? ['comun'] 
-    : ['sistema', mod];
+  const segmentos = mod.toLowerCase() === 'comun' ? ['comun'] : ['sistema', mod];
 
   const directorio = path.join(UPLOADS_DIR, ...segmentos, String(idUsuario));
   fs.mkdirSync(directorio, { recursive: true });

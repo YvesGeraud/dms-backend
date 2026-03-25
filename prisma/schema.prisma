@@ -41,6 +41,7 @@ model dt_documento {
   tama_o_bytes         Int       @map("tamaño_bytes")
   hash                 String    @db.VarChar(64)
   id_ct_tipo_documento Int
+  id_ct_usuario        Int
   estado               Boolean   @default(true)
   fecha_in             DateTime  @default(now()) @db.DateTime(0)
   fecha_up             DateTime? @db.DateTime(0)
@@ -52,6 +53,7 @@ model dt_documento {
   @@index([hash], map: "idx_hash")
   @@index([estado], map: "estado")
   @@index([id_ct_tipo_documento], map: "idx_id_ct_tipo_documento")
+  @@index([id_ct_usuario], map: "idx_id_ct_usuario")
   @@index([id_ct_usuario_in], map: "id_ct_usuario_in")
   @@index([id_ct_usuario_up], map: "id_ct_usuario_up")
 }

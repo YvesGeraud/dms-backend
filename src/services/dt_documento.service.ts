@@ -85,6 +85,7 @@ class DtDocumentoService {
         tama_o_bytes: archivo.size,
         hash,
         id_ct_tipo_documento: datos.id_ct_tipo_documento,
+        id_ct_usuario: datos.id_ct_usuario,
         id_ct_usuario_in: idUsuario,
       },
     });
@@ -105,14 +106,12 @@ class DtDocumentoService {
   async subirDocumentosBatch(
     datos: SubirDocumentoDTO,
     archivos: Express.Multer.File[],
-    idUsuario: number
+    idUsuario: number,
   ) {
     // Si necesitas validar el tipo de documento una sola vez para ahorro de CPU/DB,
     // podrías refactorizar `subirDocumento` para inyectar `tipodoc`.
     // Por simplicidad y reuso total, ejecutamos en Promise.all:
-    const operaciones = archivos.map((archivo) =>
-      this.subirDocumento(datos, archivo, idUsuario)
-    );
+    const operaciones = archivos.map((archivo) => this.subirDocumento(datos, archivo, idUsuario));
 
     // Se ejecutan las subidas concurrentemente
     return Promise.all(operaciones);
@@ -156,7 +155,7 @@ class DtDocumentoService {
       },
       include: {
         ct_tipo_documento: {
-          select: { descripcion: true },
+          select: { modulo: true, descripcion: true },
         },
       },
     });
@@ -165,6 +164,26 @@ class DtDocumentoService {
       ...doc,
       rutaAbsoluta: path.resolve(doc.ruta_relativa),
     }));
+  }
+
+  /**
+   * Realiza un borrado lógico (estado = false) de un documento por su hash.
+   *
+   * @param hash - hash del documento
+   * @throws ErrorNoEncontrado si el hash no existe
+   */
+  async desactivarPorHash(hash: string) {
+    const doc = await buscarOError(
+      prisma.dt_documento.findFirst({
+        where: { hash, estado: true },
+      }),
+      'dt_documento',
+    );
+
+    return prisma.dt_documento.update({
+      where: { id_dt_documento: doc.id_dt_documento },
+      data: { estado: false, fecha_up: new Date() },
+    });
   }
 }
 

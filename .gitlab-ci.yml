@@ -3,7 +3,6 @@ stages:
   - build
   - publish
 
-
 #DEV--------------------------------------------------------------
 
 dependences_dev:
@@ -43,8 +42,8 @@ build_dev:
 
 publish_dev:
   variables:
-    DEPLOY: "/var/www/api-dev"
-    FOLDER: "dms"
+    DEPLOY: '/var/www/api-dev'
+    FOLDER: 'dms'
   stage: publish
   rules:
     - if: $CI_COMMIT_BRANCH == "dev"
@@ -107,8 +106,8 @@ build_uat:
 
 publish_uat:
   variables:
-    DEPLOY: "/var/www/api-uat"
-    FOLDER: "dms"
+    DEPLOY: '/var/www/api-uat'
+    FOLDER: 'dms'
   stage: publish
   rules:
     - if: $CI_COMMIT_BRANCH == "uat"
@@ -131,8 +130,6 @@ publish_uat:
     - cp -r $CI_PROJECT_DIR/dist/. $DEPLOY/$FOLDER/
     - mkdir -p $DEPLOY/$FOLDER/tmp/
     - touch $DEPLOY/$FOLDER/tmp/restart.txt
-
-
 
 # --- DESPLIEGUE PROD -----------------------------------------------
 dependences_prod:
@@ -167,13 +164,13 @@ build_prod:
   artifacts:
     paths:
       - dist/
-      
+
     expire_in: 30 min
 
 publish_prod:
   variables:
-    DEPLOY: "/var/www"
-    FOLDER: "api-dms"
+    DEPLOY: '/var/www'
+    FOLDER: 'api-dms'
   stage: publish
   tags: [prod-apps]
   rules:
@@ -182,7 +179,7 @@ publish_prod:
     - echo "Limpieza atómica y reinicio Passenger en Backend Prod"
     - rm -rf $DEPLOY/$FOLDER
     - mkdir -p $DEPLOY/$FOLDER/tmp
-    - cp -rf $CI_PROJECT_DIR/dist/* $DEPLOY/$FOLDER/ 
+    - cp -rf $CI_PROJECT_DIR/dist/* $DEPLOY/$FOLDER/
     - cp $CI_PROJECT_DIR/package*.json $DEPLOY/$FOLDER/
     - cd $DEPLOY/$FOLDER
     - npm ci --omit=dev
