@@ -38,6 +38,30 @@ class DtDocumentoController {
   }
 
   /**
+   * POST /api/dt_documento/subir-batch
+   *
+   * Toma un arreglo de archivos (req.files) y un conjunto de metadatos (req.body)
+   * y llama al servicio para procesarlos en lote.
+   */
+  async subirBatch(req: Request, res: Response): Promise<void> {
+    const archivos = req.files as Express.Multer.File[];
+
+    if (!archivos || archivos.length === 0) {
+      throw new ErrorNegocio(
+        'No se recibió ningún archivo. Envía al menos un archivo en el campo "archivos".',
+      );
+    }
+
+    const documentos = await dtDocumentoService.subirDocumentosBatch(
+      req.body as SubirDocumentoDTO,
+      archivos,
+      1, // TODO: reemplazar con req.user.id cuando se integre JWT
+    );
+
+    responder.creado(res, documentos, `${documentos.length} documento(s) subido(s) exitosamente`);
+  }
+
+  /**
    * GET /api/dt_documento/:hash/descargar?inline=true
    *
    * Envía el archivo al cliente mediante ReadStream (sin cargarlo en RAM).

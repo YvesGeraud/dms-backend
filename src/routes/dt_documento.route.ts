@@ -35,6 +35,22 @@ router.post(
 );
 
 /**
+ * POST /api/dt_documento/subir-batch
+ *
+ * Sube múltiples archivos y los registra en dt_documento.
+ * Body (multipart/form-data):
+ *   - archivos             : File[] (hasta 10 archivos)
+ *   - id_ct_tipo_documento : number
+ *   - id_ct_usuario        : number
+ */
+router.post(
+  '/subir-batch',
+  memoriaUpload.array('archivos', 10), // multer deja un array de buffers en req.files
+  validar(subirDocumentoSchema), // usa la misma validación de metadata
+  dtDocumentoController.subirBatch, 
+);
+
+/**
  * GET /api/dt_documento/:hash/descargar?inline=true
  *
  * Descarga un documento mediante ReadStream (sin cargarlo en RAM).
