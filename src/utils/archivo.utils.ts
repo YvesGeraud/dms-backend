@@ -357,18 +357,10 @@ export function validarArchivoContraTipo(
   archivo: Express.Multer.File,
   tipo: TipoDocumentoParaValidar,
 ): void {
-  // extensiones_permitidas puede estar guardado como JSON array ("["jpg","pdf"]")
-  // o como CSV simple ("jpg,pdf"). Se soportan ambos formatos.
-  let tokens: string[];
-  try {
-    const parsed = JSON.parse(tipo.extensiones_permitidas) as unknown;
-    tokens = Array.isArray(parsed) ? (parsed as string[]) : tipo.extensiones_permitidas.split(',');
-  } catch {
-    tokens = tipo.extensiones_permitidas.split(',');
-  }
-  // Normaliza cada token: quita el punto inicial si ya existe antes de agregarlo,
-  // así "jpg" y ".jpg" en la BD producen el mismo resultado ".jpg"
-  const permitidas = tokens.map((e) => `.${e.trim().toLowerCase().replace(/^\./, '')}`);
+  // Extrae los nombres de extensión con regex sin importar el formato guardado en BD:
+  // funciona con JSON array (["jpg","pdf"]), CSV (jpg,pdf), con o sin puntos/comillas.
+  const tokens = tipo.extensiones_permitidas.match(/[a-zA-Z0-9]+/g) ?? [];
+  const permitidas = tokens.map((e) => `.${e.toLowerCase()}`);
 
   const extArchivo = path.extname(archivo.originalname).toLowerCase();
 
