@@ -23,12 +23,26 @@ const app = express();
 // Cabeceras de seguridad HTTP (elimina X-Powered-By, añade CSP, etc.)
 app.use(helmet());
 
-// CORS: solo los orígenes definidos en .env pueden hacer peticiones con cookies
+// CORS: lista blanca desde ALLOWED_ORIGINS (.env en local, passenger_env_var en servidor)
 app.use(
   cors({
-    origin: config.cors.origenes,
-    credentials: true, // necesario para que el navegador envíe/reciba cookies httpOnly
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+    origin: (origin, callback) => {
+      // Sin origin → Postman, curl, o llamadas server-to-server: permitir
+      if (!origin) return callback(null, true);
+
+      if (config.cors.origenes.includes(origin)) {
+        callback(null, true);
+      } else {
+        if (!config.esProduccion) {
+          console.warn(`[CORS] Origen bloqueado: ${origin}`);
+        }
+        callback(new Error(`Origen no permitido por CORS: ${origin}`));
+      }
+    },
+    credentials: true,         // necesario para cookies HttpOnly cross-origin
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    maxAge: 86400,             // preflight cacheado 24 h → reduce requests OPTIONS
   }),
 );
 

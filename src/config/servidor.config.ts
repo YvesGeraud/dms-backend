@@ -58,7 +58,9 @@ export const config = {
   },
 
   cors: {
-    origenes: opcional('CORS_ORIGINS', 'http://localhost:4200')
+    // En servidor: Passenger expone esta variable desde nginx (passenger_env_var ALLOWED_ORIGINS)
+    // En local: definida en .env como ALLOWED_ORIGINS
+    origenes: opcional('ALLOWED_ORIGINS', 'http://localhost:4200')
       .split(',')
       .map((s) => s.trim())
       .filter(Boolean),
