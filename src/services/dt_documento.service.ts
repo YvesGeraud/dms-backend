@@ -138,6 +138,34 @@ class DtDocumentoService {
 
     return { doc, rutaAbsoluta };
   }
+
+  /**
+   * Obtiene todos los documentos de un tipo específico y con un estado determinado.
+   *
+   * @param idTipo - Id del tipo de documento
+   * @param estado - Filtro por estado activo/inactivo (default: true)
+   * @returns Listado de documentos con rutas absolutas
+   */
+  async obtenerPorTipoYEstado(idTipo: number | number[], estado = true) {
+    const ids = Array.isArray(idTipo) ? idTipo : [idTipo];
+
+    const documentos = await prisma.dt_documento.findMany({
+      where: {
+        id_ct_tipo_documento: { in: ids },
+        estado,
+      },
+      include: {
+        ct_tipo_documento: {
+          select: { descripcion: true },
+        },
+      },
+    });
+
+    return documentos.map((doc) => ({
+      ...doc,
+      rutaAbsoluta: path.resolve(doc.ruta_relativa),
+    }));
+  }
 }
 
 export default new DtDocumentoService();

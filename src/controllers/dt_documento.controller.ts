@@ -2,7 +2,7 @@ import type { Request, Response } from 'express';
 import dtDocumentoService from '@/services/dt_documento.service';
 import { responder } from '@/utils/respuestas.utils';
 import { ErrorNegocio } from '@/utils/errores.utils';
-import { descargarArchivo } from '@/utils/archivo.utils';
+import { descargarArchivo, comprimirArchivos } from '@/utils/archivo.utils';
 import type { SubirDocumentoDTO } from '@/schemas/dt_documento.schemas';
 
 /**
@@ -78,6 +78,54 @@ class DtDocumentoController {
 
     // Usa el nombre_original para el header — el usuario ve el nombre real, no el hash
     await descargarArchivo(res, rutaAbsoluta, doc.nombre_original, !inline);
+  }
+
+  /**
+   * GET /api/dt_documento/tipo/:id/descargar?estado=1
+   *
+   * Descarga todos los documentos de un tipo en un solo ZIP.
+   */
+  async descargarPorTipo(req: Request, res: Response): Promise<void> {
+    const idsQuery = req.query['ids'] as string;
+    const idParam = req.params['id'];
+    const estado = req.query['estado'] !== '0';
+
+    let ids: number[] = [];
+
+    if (idsQuery) {
+      // Maneja ?ids=1,2,3
+      ids = idsQuery.split(',').map(Number).filter((id) => !isNaN(id));
+    } else if (idParam) {
+      // Maneja /tipo/:id/descargar
+      const id = Number(idParam);
+      if (!isNaN(id)) ids = [id];
+    }
+
+    if (ids.length === 0) {
+      throw new ErrorNegocio('Se requiere al menos un ID de tipo de documento válido.');
+    }
+
+    const documentos = await dtDocumentoService.obtenerPorTipoYEstado(ids, estado);
+
+    if (documentos.length === 0) {
+      throw new ErrorNegocio('No se encontraron documentos para los tipos y estado solicitados.');
+    }
+
+    const archivos = documentos.map((doc) => ({
+      rutaAbsoluta: doc.rutaAbsoluta,
+      nombreDeseado: doc.nombre_original,
+    }));
+
+    // El nombre del ZIP será descriptivo
+    let nombreZip = 'documentos';
+    if (ids.length === 1 && documentos[0]?.ct_tipo_documento?.descripcion) {
+      const desc = documentos[0].ct_tipo_documento.descripcion;
+      nombreZip = `${desc.replace(/\s+/g, '_')}_${ids[0]}`;
+    } else {
+      nombreZip = `lote_documentos_${ids.join('_')}`;
+    }
+
+    await comprimirArchivos(res, archivos, nombreZip);
   }
 }
 

@@ -441,3 +441,43 @@ export async function guardarArchivoDesdeMemoria(
   await fs.promises.writeFile(ruta, buffer);
   return { ruta, duplicado: false };
 }
+/**
+ * Comprime un listado de archivos en un stream ZIP y lo envía a la Response.
+ * Ideal para "Descargar todo" sin crear archivos temporales en el servidor.
+ *
+ * @param res        - Respuesta de Express
+ * @param archivos   - Lista de objetos con ruta absoluta y nombre deseado en el ZIP
+ * @param nombreZip  - Nombre del archivo .zip final (sin extensión)
+ */
+export async function comprimirArchivos(
+  res: Response,
+  archivos: { rutaAbsoluta: string; nombreDeseado: string }[],
+  nombreZip: string,
+): Promise<void> {
+  const archiver = (await import('archiver')).default;
+  const archive = archiver('zip', { zlib: { level: 9 } });
+
+  // Configurar headers para descarga de archivo binario
+  res.setHeader('Content-Type', 'application/zip');
+  res.setHeader(
+    'Content-Disposition',
+    `attachment; filename="${encodeURIComponent(nombreZip)}.zip"`,
+  );
+
+  // Pipe del archivo comprimido a la respuesta
+  archive.pipe(res);
+
+  for (const item of archivos) {
+    try {
+      // Verificar acceso antes de añadir al zip
+      await fs.promises.access(item.rutaAbsoluta, fs.constants.R_OK);
+      archive.file(item.rutaAbsoluta, { name: item.nombreDeseado });
+    } catch (err) {
+      // Si un archivo falta, lo omitimos (o podríamos añadir un .txt avisando)
+      console.error(`No se pudo acceder a ${item.rutaAbsoluta}:`, err);
+    }
+  }
+
+  // Finalizar el stream
+  await archive.finalize();
+}

@@ -59,4 +59,20 @@ router.post(
  */
 router.get('/:hash/descargar', validar(hashParamSchema), dtDocumentoController.descargar);
 
+/**
+ * GET /api/dt_documento/tipo/:id/descargar
+ *
+ * Descarga todos los documentos de un tipo dado en un solo ZIP.
+ * Query params opcionales:
+ *   - estado=1 (default) | estado=0 para descargar los inactivos
+ */
+router.get('/tipo/:id/descargar', dtDocumentoController.descargarPorTipo);
+
+/**
+ * GET /api/dt_documento/lote/descargar?ids=1,2,3&estado=1
+ *
+ * Descarga documentos de múltiples tipos en un solo ZIP.
+ */
+router.get('/lote/descargar', dtDocumentoController.descargarPorTipo);
+
 export default router;
