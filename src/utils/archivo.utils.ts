@@ -366,7 +366,9 @@ export function validarArchivoContraTipo(
   } catch {
     tokens = tipo.extensiones_permitidas.split(',');
   }
-  const permitidas = tokens.map((e) => `.${e.trim().toLowerCase()}`);
+  // Normaliza cada token: quita el punto inicial si ya existe antes de agregarlo,
+  // así "jpg" y ".jpg" en la BD producen el mismo resultado ".jpg"
+  const permitidas = tokens.map((e) => `.${e.trim().toLowerCase().replace(/^\./, '')}`);
 
   const extArchivo = path.extname(archivo.originalname).toLowerCase();
 
