@@ -42,6 +42,7 @@ model dt_documento {
   hash                 String    @db.VarChar(64)
   id_ct_tipo_documento Int
   id_ct_usuario        Int
+  storage_provider     String    @default("local") @db.VarChar(20)
   estado               Boolean   @default(true)
   fecha_in             DateTime  @default(now()) @db.DateTime(0)
   fecha_up             DateTime? @db.DateTime(0)

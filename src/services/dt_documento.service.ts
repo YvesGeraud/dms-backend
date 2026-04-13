@@ -8,6 +8,7 @@ import {
   guardarArchivoDesdeMemoria,
   EXTENSION_A_MIME,
 } from '@/utils/archivo.utils';
+import { config } from '@/config/servidor.config';
 import type { SubirDocumentoDTO } from '@/schemas/dt_documento.schemas';
 
 // ── Servicio ──────────────────────────────────────────────────────────────────
@@ -42,10 +43,6 @@ class DtDocumentoService {
     //    Lanza ErrorNegocio si la extensión o tamaño no son válidos
     validarArchivoContraTipo(archivo, tipodoc);
 
-    // ── 3. Resolver la ruta destino según el módulo + rupeet ─────────────────
-    //    Crea la carpeta si no existe (mkdirSync recursive)
-    //    El nombre de módulo o carpeta (ej: "comun" o "sistema/Proni") viene en tipodoc.modulo
-    const directorio = resolverRutaModulo(tipodoc.modulo, datos.id_ct_usuario);
 
     // ── 4. Calcular hash SHA-256 del buffer ──────────────────────────────────
     const hash = calcularHashBuffer(archivo.buffer);
@@ -65,15 +62,24 @@ class DtDocumentoService {
       return { ...existente, duplicado: true };
     }
 
-    // ── 6. Escribir a disco (solo si el contenido es nuevo en BD) ────────────
-    const { ruta } = await guardarArchivoDesdeMemoria(archivo.buffer, directorio, nombreSistema);
-
-    // Ruta relativa desde la raíz del proyecto (para portabilidad entre entornos)
-    // Ej: uploads/comun/3/abc123...def.pdf
-    const rutaRelativa = path.relative(process.cwd(), ruta).replace(/\\/g, '/');
-
-    // MIME type derivado de la extensión
+    // ── 6. Escribir a almacenamiento (solo si el contenido es nuevo) ────────────
     const mimeType = EXTENSION_A_MIME[ext] ?? archivo.mimetype;
+    let rutaRelativa = '';
+
+    if (config.storageProvider === 's3') {
+      const { guardarArchivoEnS3 } = await import('@/utils/s3.utils');
+      // S3 object key format: modulo/idUsuario/archivo
+      const modLimpio = tipodoc.modulo.toLowerCase().replace(/\s+/g, '_');
+      const s3Prefix = modLimpio === 'comun' ? 'comun' : `sistema/${modLimpio}`;
+      const objectKey = `${s3Prefix}/${datos.id_ct_usuario}/${nombreSistema}`;
+      
+      await guardarArchivoEnS3(archivo.buffer, mimeType, objectKey);
+      rutaRelativa = objectKey;
+    } else {
+      const directorio = resolverRutaModulo(tipodoc.modulo, datos.id_ct_usuario);
+      const { ruta } = await guardarArchivoDesdeMemoria(archivo.buffer, directorio, nombreSistema);
+      rutaRelativa = path.relative(process.cwd(), ruta).replace(/\\/g, '/');
+    }
 
     // ── 7. Persistir en dt_documento ─────────────────────────────────────────
     const documento = await prisma.dt_documento.create({
@@ -84,6 +90,7 @@ class DtDocumentoService {
         mime_type: mimeType,
         tama_o_bytes: archivo.size,
         hash,
+        storage_provider: config.storageProvider,
         id_ct_tipo_documento: datos.id_ct_tipo_documento,
         id_ct_usuario: datos.id_ct_usuario,
         id_ct_usuario_in: idUsuario,
@@ -132,8 +139,10 @@ class DtDocumentoService {
       'dt_documento',
     );
 
-    // ruta_relativa se guardó con barras "/" (portable). Para el FS local:
-    const rutaAbsoluta = path.resolve(doc.ruta_relativa);
+    // Para el FS local: path absoluto, para S3: devuelve la misma llave relativa (ObjectKey)
+    const rutaAbsoluta = doc.storage_provider === 'local' 
+      ? path.resolve(doc.ruta_relativa) 
+      : doc.ruta_relativa;
 
     return { doc, rutaAbsoluta };
   }
@@ -162,7 +171,9 @@ class DtDocumentoService {
 
     return documentos.map((doc) => ({
       ...doc,
-      rutaAbsoluta: path.resolve(doc.ruta_relativa),
+      rutaAbsoluta: doc.storage_provider === 'local' ? path.resolve(doc.ruta_relativa) : doc.ruta_relativa,
+      isS3: doc.storage_provider === 's3',
+      s3Key: doc.storage_provider === 's3' ? doc.ruta_relativa : undefined,
     }));
   }
 

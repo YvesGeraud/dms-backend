@@ -1,5 +1,5 @@
 type NodeEnv = 'development' | 'test' | 'production';
-
+type StorageProvider = 'local' | 's3';
 function opcional(nombre: string, porDefecto: string): string {
   const valor = process.env[nombre];
   return valor && valor.trim() !== '' ? valor : porDefecto;
@@ -40,11 +40,18 @@ const nodeEnv = unoDe<NodeEnv>(
   'development',
 );
 
+const storageProvider = unoDe<StorageProvider>(
+  'STORAGE_PROVIDER',
+  ['local', 's3'] as const,
+  'local',
+);
+
 export const config = {
   nodeEnv,
   esProduccion: nodeEnv === 'production',
   puerto: numero('PORT', 3000),
   uploadPath: opcional('UPLOAD_BASE_PATH', 'uploads'),
+  storageProvider,
   apiUrl: opcional('API_URL', 'http://localhost:3000'),
   basePath: opcional('HOST', '/'), // local: "/", servidor: "/app/dms/"
 
@@ -75,5 +82,14 @@ export const config = {
 
   bcrypt: {
     rounds: numero('BCRYPT_ROUNDS', 12),
+  },
+
+  s3: {
+    region: opcional('AWS_REGION', 'us-east-1'),
+    accessKey: opcional('AWS_ACCESS_KEY_ID', ''),
+    secretKey: opcional('AWS_SECRET_ACCESS_KEY', ''),
+    bucket: opcional('AWS_S3_BUCKET', ''),
+    endpoint: opcional('AWS_S3_ENDPOINT', ''),
+    forcePathStyle: opcional('AWS_S3_FORCE_PATH_STYLE', 'false') === 'true',
   },
 } as const;

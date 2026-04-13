@@ -447,7 +447,7 @@ export async function guardarArchivoDesdeMemoria(
  */
 export async function comprimirArchivos(
   res: Response,
-  archivos: { rutaAbsoluta: string; nombreDeseado: string }[],
+  archivos: { rutaAbsoluta: string; nombreDeseado: string; isS3?: boolean; s3Key?: string }[],
   nombreZip: string,
 ): Promise<void> {
   const archiver = (await import('archiver')).default;
@@ -465,12 +465,19 @@ export async function comprimirArchivos(
 
   for (const item of archivos) {
     try {
-      // Verificar acceso antes de añadir al zip
-      await fs.promises.access(item.rutaAbsoluta, fs.constants.R_OK);
-      archive.file(item.rutaAbsoluta, { name: item.nombreDeseado });
+      if (item.isS3 && item.s3Key) {
+        // Importación dinámica para evitar dependencia circular estricta si archivo.utils.ts carga primero
+        const { obtenerStreamDeS3 } = await import('@/utils/s3.utils');
+        const stream = await obtenerStreamDeS3(item.s3Key);
+        archive.append(stream, { name: item.nombreDeseado });
+      } else {
+        // Verificar acceso antes de añadir al zip
+        await fs.promises.access(item.rutaAbsoluta, fs.constants.R_OK);
+        archive.file(item.rutaAbsoluta, { name: item.nombreDeseado });
+      }
     } catch (err) {
       // Si un archivo falta, lo omitimos (o podríamos añadir un .txt avisando)
-      console.error(`No se pudo acceder a ${item.rutaAbsoluta}:`, err);
+      console.error(`No se pudo acceder a ${item.nombreDeseado}:`, err);
     }
   }
 

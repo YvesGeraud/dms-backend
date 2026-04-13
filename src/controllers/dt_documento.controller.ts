@@ -76,6 +76,13 @@ class DtDocumentoController {
 
     const { doc, rutaAbsoluta } = await dtDocumentoService.obtenerParaDescarga(hash);
 
+    if (doc.storage_provider === 's3') {
+      const { obtenerPreSignedUrl } = await import('@/utils/s3.utils');
+      const url = await obtenerPreSignedUrl(rutaAbsoluta, doc.nombre_original, inline);
+      res.redirect(302, url);
+      return;
+    }
+
     // Usa el nombre_original para el header — el usuario ve el nombre real, no el hash
     await descargarArchivo(res, rutaAbsoluta, doc.nombre_original, !inline);
   }
@@ -127,6 +134,8 @@ class DtDocumentoController {
       return {
         rutaAbsoluta: doc.rutaAbsoluta,
         nombreDeseado,
+        isS3: doc.isS3,
+        s3Key: doc.s3Key,
       };
     });
 

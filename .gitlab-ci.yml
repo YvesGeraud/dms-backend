@@ -1,186 +1,123 @@
 stages:
-  - dependences
+  - dependencies
   - build
   - publish
 
-#DEV--------------------------------------------------------------
-
-dependences_dev:
-  stage: dependences
-  rules:
-    - if: $CI_COMMIT_BRANCH == "dev"
-  tags:
-    - dev
+# ─── Templates ────────────────────────────────────────────────────
+.deps_template: &deps_template
+  stage: dependencies
   cache:
     key:
       files:
-        - package.json
+        - package-lock.json
     paths:
       - node_modules
   script:
-    - npm install
+    - npm ci --include=dev
 
-build_dev:
+.build_template: &build_template
   stage: build
-  rules:
-    - if: $CI_COMMIT_BRANCH == "dev"
-  tags:
-    - dev
   cache:
     - key:
         files:
-          - package.json
+          - package-lock.json
       paths:
         - node_modules
-    - key: cache-$CI_COMMIT_REF_SLUG
+    - key: build-$CI_COMMIT_REF_SLUG
       paths:
         - dist
   script:
-    - npx prisma generate
-    - npm run build
-    - cp -f .env dist/
-
-publish_dev:
-  variables:
-    DEPLOY: '/var/www/api-dev'
-    FOLDER: 'dms'
-  stage: publish
-  rules:
-    - if: $CI_COMMIT_BRANCH == "dev"
-  tags:
-    - dev
-  cache:
-    - key:
-        files:
-          - package.json
-      paths:
-        - node_modules
-    - key: cache-$CI_COMMIT_REF_SLUG
-      paths:
-        - dist
-  script:
-    - echo "Desplegando a dev"
-    - mkdir -p $DEPLOY/$FOLDER/
-    - rm -rf $DEPLOY/$FOLDER/*
-    - cp -rf $CI_PROJECT_DIR/node_modules/ $DEPLOY/$FOLDER/
-    - cp -r $CI_PROJECT_DIR/dist/. $DEPLOY/$FOLDER/
-    - mkdir -p $DEPLOY/$FOLDER/tmp/
-    - touch $DEPLOY/$FOLDER/tmp/restart.txt
-
-#UAT---------------------------------------------------
-
-dependences_uat:
-  stage: dependences
-  rules:
-    - if: $CI_COMMIT_BRANCH == "uat"
-  tags:
-    - uat
-  cache:
-    key:
-      files:
-        - package.json
-    paths:
-      - node_modules
-  script:
-    - npm install
-
-build_uat:
-  stage: build
-  rules:
-    - if: $CI_COMMIT_BRANCH == "uat"
-  tags:
-    - uat
-  cache:
-    - key:
-        files:
-          - package.json
-      paths:
-        - node_modules
-    - key: cache-$CI_COMMIT_REF_SLUG
-      paths:
-        - dist
-  script:
-    - npx prisma generate
-    - npm run build
-    - cp -f .env dist/
-
-publish_uat:
-  variables:
-    DEPLOY: '/var/www/api-uat'
-    FOLDER: 'dms'
-  stage: publish
-  rules:
-    - if: $CI_COMMIT_BRANCH == "uat"
-  tags:
-    - uat
-  cache:
-    - key:
-        files:
-          - package.json
-      paths:
-        - node_modules
-    - key: cache-$CI_COMMIT_REF_SLUG
-      paths:
-        - dist
-  script:
-    - echo "Desplegando a uat"
-    - mkdir -p $DEPLOY/$FOLDER/
-    - rm -rf $DEPLOY/$FOLDER/*
-    - cp -rf $CI_PROJECT_DIR/node_modules/ $DEPLOY/$FOLDER/
-    - cp -r $CI_PROJECT_DIR/dist/. $DEPLOY/$FOLDER/
-    - mkdir -p $DEPLOY/$FOLDER/tmp/
-    - touch $DEPLOY/$FOLDER/tmp/restart.txt
-
-# --- DESPLIEGUE PROD -----------------------------------------------
-dependences_prod:
-  stage: dependences
-  tags: [prod-apps]
-  rules:
-    - if: $CI_COMMIT_BRANCH == "main"
-  cache:
-    key: { files: [package.json] }
-    paths: [node_modules]
-  script:
-    - npm install
-
-build_prod:
-  stage: build
-  tags: [prod-apps]
-  rules:
-    - if: $CI_COMMIT_BRANCH == "main"
-  cache:
-    key: { files: [package.json] }
-    paths: [node_modules]
-    policy: pull
-  script:
-    - rm -rf dist/
     - npx prisma generate
     - npx tsc
-    - npx tsc-alias
-    - cp -rf public dist/ || true
-    - cp -rf mails dist/ || true
-    - cp -rf src/fonts dist/fonts || true
-    - cp -f .env dist/ || true
-  artifacts:
-    paths:
-      - dist/
+    - npx tsc-alias # ← el fix crítico
+    - cp -f .env dist/
 
-    expire_in: 30 min
-
-publish_prod:
-  variables:
-    DEPLOY: '/var/www'
-    FOLDER: 'api-dms'
+.publish_template: &publish_template
   stage: publish
-  tags: [prod-apps]
+  cache:
+    - key:
+        files:
+          - package-lock.json
+      paths:
+        - node_modules
+    - key: build-$CI_COMMIT_REF_SLUG
+      paths:
+        - dist
+  script:
+    - echo "Desplegando a $ENV_NAME"
+    - mkdir -p $DEPLOY/$FOLDER/
+    - rm -rf $DEPLOY/$FOLDER/*
+    - cp -rf $CI_PROJECT_DIR/node_modules/ $DEPLOY/$FOLDER/
+    - cp -r $CI_PROJECT_DIR/dist/. $DEPLOY/$FOLDER/
+    - mkdir -p $DEPLOY/$FOLDER/tmp/
+    - touch $DEPLOY/$FOLDER/tmp/restart.txt
+
+# ─── DEV ──────────────────────────────────────────────────────────
+dependencies_dev:
+  <<: *deps_template
+  rules:
+    - if: $CI_COMMIT_BRANCH == "dev"
+  tags: [dev]
+
+build_dev:
+  <<: *build_template
+  rules:
+    - if: $CI_COMMIT_BRANCH == "dev"
+  tags: [dev]
+
+publish_dev:
+  <<: *publish_template
+  variables:
+    ENV_NAME: 'dev'
+    DEPLOY: '/var/www/api-dev'
+    FOLDER: 'dms'
+  rules:
+    - if: $CI_COMMIT_BRANCH == "dev"
+  tags: [dev]
+
+# ─── UAT ──────────────────────────────────────────────────────────
+dependencies_uat:
+  <<: *deps_template
+  rules:
+    - if: $CI_COMMIT_BRANCH == "uat"
+  tags: [uat]
+
+build_uat:
+  <<: *build_template
+  rules:
+    - if: $CI_COMMIT_BRANCH == "uat"
+  tags: [uat]
+
+publish_uat:
+  <<: *publish_template
+  variables:
+    ENV_NAME: 'uat'
+    DEPLOY: '/var/www/api-uat'
+    FOLDER: 'dms'
+  rules:
+    - if: $CI_COMMIT_BRANCH == "uat"
+  tags: [uat]
+
+# ─── PROD ─────────────────────────────────────────────────────────
+dependencies_prod:
+  <<: *deps_template
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
-  script:
-    - echo "Limpieza atómica y reinicio Passenger en Backend Prod"
-    - rm -rf $DEPLOY/$FOLDER
-    - mkdir -p $DEPLOY/$FOLDER/tmp
-    - cp -rf $CI_PROJECT_DIR/dist/* $DEPLOY/$FOLDER/
-    - cp $CI_PROJECT_DIR/package*.json $DEPLOY/$FOLDER/
-    - cd $DEPLOY/$FOLDER
-    - npm ci --omit=dev
-    - touch tmp/restart.txt
+  tags: [prod-apps]
+
+build_prod:
+  <<: *build_template
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+  tags: [prod-apps]
+
+publish_prod:
+  <<: *publish_template
+  variables:
+    ENV_NAME: 'produccion'
+    DEPLOY: '/var/www'
+    FOLDER: 'api-dms'
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+  tags: [prod-apps]
+  when: manual # 🔒 prod requiere aprobación

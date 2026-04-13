@@ -25,17 +25,81 @@ services:
     working_dir: /usr/src/app
     ports:
       - '3000:3000'
-    env_file: .env
     environment:
       - DB_HOST=db
       - DATABASE_URL=mysql://root:root@db:3306/dms
+      - STORAGE_PROVIDER=s3
+      - AWS_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=minioadmin
+      - AWS_SECRET_ACCESS_KEY=minioadmin
+      - AWS_S3_BUCKET=dms-bucket
+      - AWS_S3_ENDPOINT=http://s3:9000
+      - AWS_S3_FORCE_PATH_STYLE=true
+    env_file:
+      .env
     depends_on:
       db:
         condition: service_healthy
     volumes:
       - .:/usr/src/app
       - node_modules:/usr/src/app/node_modules
-    command: sh -lc "npm install && npm run db:generate && npm run dev"
+    command: sh -lc "npm install && npx prisma generate && npm run dev"
+  s3:
+    image: minio/minio:latest
+    container_name: dms_s3
+    ports:
+      - '9000:9000'
+      - '9001:9001'
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
+    volumes:
+      - s3_data:/data
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9000/minio/health/live']
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  s3-setup:
+    image: minio/mc:latest
+    container_name: dms_s3_setup
+    depends_on:
+      s3:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      /usr/bin/mc alias set myminio http://s3:9000 minioadmin minioadmin;
+      /usr/bin/mc mb myminio/dms-bucket --ignore-existing;
+      /usr/bin/mc anonymous set public myminio/dms-bucket;
+      exit 0;
+      "
+
+# Simula prod usando el Dockerfile real
+  backend_prod:
+    build:
+      context: .
+      dockerfile: Dockerfile # ← usa tu Dockerfile de prod
+    container_name: restaurante_backend_prod
+    ports:
+      - '3001:3001'
+    environment:
+      - PORT=3001
+      - DATABASE_URL=mysql://root:root@db:3306/restaurante
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DBNAMES=restaurante
+      - DB_USER=root
+      - DB_PASSWORD=root
+      - JWT_SECRET=UsetSistemas2025
+      - JWT_REFRESH_SECRET=SecretoEnLaUset
+      - ALLOWED_ORIGINS=http://localhost:4200,http://localhost:3001
+    depends_on:
+      db:
+        condition: service_healthy
+    profiles:
+      - prod
 
 volumes:
   db_data:

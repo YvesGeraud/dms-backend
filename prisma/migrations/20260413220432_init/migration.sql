@@ -30,6 +30,7 @@ CREATE TABLE `dt_documento` (
     `hash` VARCHAR(64) NOT NULL,
     `id_ct_tipo_documento` INTEGER NOT NULL,
     `id_ct_usuario` INTEGER NOT NULL,
+    `storage_provider` VARCHAR(20) NOT NULL DEFAULT 'local',
     `estado` BOOLEAN NOT NULL DEFAULT true,
     `fecha_in` DATETIME(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
     `fecha_up` DATETIME(0) NULL,
