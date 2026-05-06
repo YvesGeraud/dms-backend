@@ -1,123 +1,26 @@
-stages:
-  - dependencies
-  - build
-  - publish
+# ═══════════════════════════════════════════════════════════════════
+#  .gitlab-ci.yml  ←  Este archivo va en el repo del proyecto HIJO
+#  Ejemplo: usetprogrammers/base-back
+# ═══════════════════════════════════════════════════════════════════
 
-# ─── Templates ────────────────────────────────────────────────────
-.deps_template: &deps_template
-  stage: dependencies
-  cache:
-    key:
-      files:
-        - package-lock.json
-    paths:
-      - node_modules
-  script:
-    - npm ci --include=dev
+# 1. Hereda TODOS los stages, templates y jobs del proyecto base
+include:
+  - project: 'usetprogrammers/plantillas'
+    ref: main
+    file: '/.plantilla.yml'
 
-.build_template: &build_template
-  stage: build
-  cache:
-    - key:
-        files:
-          - package-lock.json
-      paths:
-        - node_modules
-    - key: build-$CI_COMMIT_REF_SLUG
-      paths:
-        - dist
-  script:
-    - npx prisma generate
-    - npx tsc
-    - npx tsc-alias # ← el fix crítico
-    - cp -f .env dist/
+# 2. Solo sobreescribe la variable que identifica a ESTE proyecto
+#    El resto del pipeline (build, tests, publish) viene del include.
+variables:
+  FOLDER: 'dms' # ← única línea que cambia por proyecto
 
-.publish_template: &publish_template
-  stage: publish
-  cache:
-    - key:
-        files:
-          - package-lock.json
-      paths:
-        - node_modules
-    - key: build-$CI_COMMIT_REF_SLUG
-      paths:
-        - dist
-  script:
-    - echo "Desplegando a $ENV_NAME"
-    - mkdir -p $DEPLOY/$FOLDER/
-    - rm -rf $DEPLOY/$FOLDER/*
-    - cp -rf $CI_PROJECT_DIR/node_modules/ $DEPLOY/$FOLDER/
-    - cp -r $CI_PROJECT_DIR/dist/. $DEPLOY/$FOLDER/
-    - mkdir -p $DEPLOY/$FOLDER/tmp/
-    - touch $DEPLOY/$FOLDER/tmp/restart.txt
 
-# ─── DEV ──────────────────────────────────────────────────────────
-dependencies_dev:
-  <<: *deps_template
-  rules:
-    - if: $CI_COMMIT_BRANCH == "dev"
-  tags: [dev]
-
-build_dev:
-  <<: *build_template
-  rules:
-    - if: $CI_COMMIT_BRANCH == "dev"
-  tags: [dev]
-
-publish_dev:
-  <<: *publish_template
-  variables:
-    ENV_NAME: 'dev'
-    DEPLOY: '/var/www/api-dev'
-    FOLDER: 'dms'
-  rules:
-    - if: $CI_COMMIT_BRANCH == "dev"
-  tags: [dev]
-
-# ─── UAT ──────────────────────────────────────────────────────────
-dependencies_uat:
-  <<: *deps_template
-  rules:
-    - if: $CI_COMMIT_BRANCH == "uat"
-  tags: [uat]
-
-build_uat:
-  <<: *build_template
-  rules:
-    - if: $CI_COMMIT_BRANCH == "uat"
-  tags: [uat]
-
-publish_uat:
-  <<: *publish_template
-  variables:
-    ENV_NAME: 'uat'
-    DEPLOY: '/var/www/api-uat'
-    FOLDER: 'dms'
-  rules:
-    - if: $CI_COMMIT_BRANCH == "uat"
-  tags: [uat]
-
-# ─── PROD ─────────────────────────────────────────────────────────
-dependencies_prod:
-  <<: *deps_template
-  rules:
-    - if: $CI_COMMIT_BRANCH == "main"
-  tags: [prod-apps]
-
-build_prod:
-  <<: *build_template
-  rules:
-    - if: $CI_COMMIT_BRANCH == "main"
-  tags: [prod-apps]
-
-publish_prod:
-  <<: *publish_template
-  variables:
-    ENV_NAME: 'produccion'
-    DEPLOY: '/var/www'
-    FOLDER: 'api-dms'
-  rules:
-    - if: $CI_COMMIT_BRANCH == "main"
-  tags: [prod-apps]
-  when: manual # 🔒 prod requiere aprobación
+# ─── Opcional: si necesitas cambiar DEPLOY también ─────────────────
+# Si el path de despliegue es diferente al que define base, puedes
+# sobreescribir jobs individuales así:
+#
+# publish_dev:
+#   variables:
+#     ENV_NAME: "dev"
+#     DEPLOY: "/var/www/api-dev"   # mismo o diferente al de base
+#     FOLDER: "base"
