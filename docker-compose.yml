@@ -104,3 +104,4 @@ services:
 volumes:
   db_data:
   node_modules:
+  s3_data:
