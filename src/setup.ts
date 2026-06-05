@@ -51,7 +51,7 @@ app.use(
 app.use(
   rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 200,
+    max: 500,
     standardHeaders: 'draft-8', // RateLimit headers estándar (RFC)
     legacyHeaders: false,
     message: {
