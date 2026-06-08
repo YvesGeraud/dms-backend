@@ -174,8 +174,8 @@ class DtDocumentoController {
       throw new ErrorNegocio('Se requiere un arreglo "hashes" con al menos un elemento.');
     }
 
-    if (hashes.length > 2000) {
-      throw new ErrorNegocio('El máximo de hashes por petición es 2000.');
+    if (hashes.length > 5000) {
+      throw new ErrorNegocio('El máximo de hashes por petición es 5000.');
     }
 
     // Deduplicar hashes en la petición (el cliente podría enviar repetidos)
