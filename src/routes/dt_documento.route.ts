@@ -65,7 +65,6 @@ router.post(
  */
 router.post(
   '/descargar-batch',
-  express.json({ limit: '500kb' }),
   dtDocumentoController.descargarBatch,
 );
 

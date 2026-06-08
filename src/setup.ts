@@ -18,6 +18,11 @@ import { router } from '@/routes';
 
 const app = express();
 
+// En producción la app está detrás de nginx/Passenger que agrega X-Forwarded-For.
+// Sin esto, express-rate-limit lanza ERR_ERL_UNEXPECTED_X_FORWARDED_FOR.
+// 1 = confía en el primer proxy (nginx directo). Ajustar si hay más proxies.
+app.set('trust proxy', 1);
+
 // ── Seguridad ─────────────────────────────────────────────────────────────────
 
 // Cabeceras de seguridad HTTP (elimina X-Powered-By, añade CSP, etc.)
@@ -80,7 +85,12 @@ app.use(compression());
 
 // ── Parseo de peticiones ──────────────────────────────────────────────────────
 
-app.use(express.json({ limit: '10kb' })); // límite para evitar payloads gigantes
+// Límite de body condicional: 500kb para la ruta de descarga batch (1700+ hashes),
+// 10kb para el resto (protección contra payloads gigantes en rutas normales).
+app.use((req, res, next) => {
+  const limite = req.path.endsWith('/descargar-batch') ? '500kb' : '10kb';
+  express.json({ limit: limite })(req, res, next);
+});
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 app.use(cookieParser()); // necesario para leer cookies httpOnly
 
