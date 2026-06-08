@@ -12,7 +12,7 @@ include:
 # 2. Solo sobreescribe la variable que identifica a ESTE proyecto
 #    El resto del pipeline (build, tests, publish) viene del include.
 variables:
-  FOLDER: 'api-dms' # ← única línea que cambia por proyecto
+  FOLDER: 'dms' # ← única línea que cambia por proyecto
 
 
 # ─── Opcional: si necesitas cambiar DEPLOY también ─────────────────

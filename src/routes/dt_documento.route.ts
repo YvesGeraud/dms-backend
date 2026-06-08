@@ -54,19 +54,16 @@ router.post(
  * POST /api/dt_documento/descargar-batch
  *
  * Descarga múltiples documentos en un ZIP dado un arreglo de hashes.
- * Soporta lotes masivos (1700+ archivos) con streaming.
+ * Soporta lotes masivos (5000+ archivos) con streaming.
  *
  * Body JSON:
- *   - hashes   : string[]  (obligatorio, máximo 2000)
+ *   - hashes   : string[]  (obligatorio, máximo 5000)
  *   - carpetas : boolean   (opcional, organiza en subcarpetas)
  *
- * Se usa POST en vez de GET porque 1700 hashes SHA-256 superan el límite de URL.
- * El límite de body se sube a 500kb (suficiente para ~3000 hashes de 64 chars).
+ * Se usa POST en vez de GET porque miles de hashes SHA-256 superan el límite de URL.
+ * El límite de body se sube a 500kb en setup.ts (suficiente para ~5000 hashes de 64 chars).
  */
-router.post(
-  '/descargar-batch',
-  dtDocumentoController.descargarBatch,
-);
+router.post('/descargar-batch', dtDocumentoController.descargarBatch);
 
 /**
  * GET /api/dt_documento/lote/descargar?ids=1,2,3&estado=1&carpetas=true

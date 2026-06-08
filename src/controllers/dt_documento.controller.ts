@@ -158,7 +158,7 @@ class DtDocumentoController {
    * Diseñado para lotes masivos (1700+ archivos).
    *
    * Body JSON:
-   *   - hashes   : string[]  (obligatorio, máximo 2000)
+   *   - hashes   : string[]  (obligatorio, máximo 5000)
    *   - carpetas : boolean   (opcional, organiza por modulo/usuario)
    *
    * El ZIP se envía con streaming — no se almacena en disco ni en RAM.
