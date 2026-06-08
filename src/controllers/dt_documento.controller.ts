@@ -152,6 +152,67 @@ class DtDocumentoController {
   }
 
   /**
+   * POST /api/dt_documento/descargar-batch
+   *
+   * Descarga múltiples documentos en un solo ZIP dado un arreglo de hashes.
+   * Diseñado para lotes masivos (1700+ archivos).
+   *
+   * Body JSON:
+   *   - hashes   : string[]  (obligatorio, máximo 2000)
+   *   - carpetas : boolean   (opcional, organiza por modulo/usuario)
+   *
+   * El ZIP se envía con streaming — no se almacena en disco ni en RAM.
+   * Si algún hash no se encuentra, se incluye un _manifiesto.txt en el ZIP.
+   */
+  async descargarBatch(req: Request, res: Response): Promise<void> {
+    const { hashes, carpetas = false } = req.body as {
+      hashes: string[];
+      carpetas?: boolean;
+    };
+
+    if (!Array.isArray(hashes) || hashes.length === 0) {
+      throw new ErrorNegocio('Se requiere un arreglo "hashes" con al menos un elemento.');
+    }
+
+    if (hashes.length > 2000) {
+      throw new ErrorNegocio('El máximo de hashes por petición es 2000.');
+    }
+
+    // Deduplicar hashes en la petición (el cliente podría enviar repetidos)
+    const hashesUnicos = [...new Set(hashes)];
+
+    const { documentos, hashesNoEncontrados } =
+      await dtDocumentoService.obtenerPorHashes(hashesUnicos);
+
+    if (documentos.length === 0) {
+      throw new ErrorNegocio('No se encontró ningún documento para los hashes proporcionados.');
+    }
+
+    // Construir lista de archivos para el ZIP
+    const archivos = documentos.map((doc) => {
+      let nombreDeseado = doc.nombre_original;
+
+      if (carpetas) {
+        const modulo = doc.ct_tipo_documento.modulo.replace(/\s+/g, '_').toLowerCase();
+        nombreDeseado = `${modulo}/${doc.id_ct_usuario}/${doc.nombre_original}`;
+      }
+
+      return {
+        rutaAbsoluta: doc.rutaAbsoluta,
+        nombreDeseado,
+        isS3: doc.isS3,
+        s3Key: doc.s3Key,
+      };
+    });
+
+    // Nombre descriptivo para el ZIP
+    const nombreZip = `batch_${documentos.length}_documentos`;
+
+    // Usar comprimirArchivos con manifiesto de errores
+    await comprimirArchivos(res, archivos, nombreZip, hashesNoEncontrados);
+  }
+
+  /**
    * DELETE /api/dt_documento/:hash
    *
    * Realiza un borrado lógico del documento.

@@ -178,6 +178,59 @@ class DtDocumentoService {
   }
 
   /**
+   * Obtiene documentos por un listado masivo de hashes (soporta 1700+).
+   *
+   * Divide la consulta en chunks de 500 para no saturar el `IN(...)` de MySQL,
+   * y reporta qué hashes no fueron encontrados para incluirlos en un manifiesto.
+   *
+   * @param hashes  - Array de hashes SHA-256 a buscar
+   * @param estado  - Filtro por estado activo/inactivo (default: true)
+   * @returns Documentos encontrados con rutas absolutas + lista de hashes no encontrados
+   */
+  async obtenerPorHashes(hashes: string[], estado = true) {
+    const CHUNK_SIZE = 500;
+    const todosLosDocumentos: Awaited<ReturnType<typeof this._buscarChunkHashes>>= [];
+
+    // Dividir en chunks para no sobrecargar el IN(...)
+    for (let i = 0; i < hashes.length; i += CHUNK_SIZE) {
+      const chunk = hashes.slice(i, i + CHUNK_SIZE);
+      const resultados = await this._buscarChunkHashes(chunk, estado);
+      todosLosDocumentos.push(...resultados);
+    }
+
+    // Determinar cuáles hashes no se encontraron
+    const hashesEncontrados = new Set(todosLosDocumentos.map((d) => d.hash));
+    const hashesNoEncontrados = hashes.filter((h) => !hashesEncontrados.has(h));
+
+    return { documentos: todosLosDocumentos, hashesNoEncontrados };
+  }
+
+  /**
+   * Busca un chunk de hashes en BD y retorna los documentos con rutas absolutas.
+   * Método interno — no llamar directamente, usar `obtenerPorHashes`.
+   */
+  private async _buscarChunkHashes(hashes: string[], estado: boolean) {
+    const documentos = await prisma.dt_documento.findMany({
+      where: {
+        hash: { in: hashes },
+        estado,
+      },
+      include: {
+        ct_tipo_documento: {
+          select: { modulo: true, descripcion: true },
+        },
+      },
+    });
+
+    return documentos.map((doc) => ({
+      ...doc,
+      rutaAbsoluta: doc.storage_provider === 'local' ? path.resolve(doc.ruta_relativa) : doc.ruta_relativa,
+      isS3: doc.storage_provider === 's3',
+      s3Key: doc.storage_provider === 's3' ? doc.ruta_relativa : undefined,
+    }));
+  }
+
+  /**
    * Realiza un borrado lógico (estado = false) de un documento por su hash.
    *
    * @param hash - hash del documento
