@@ -441,17 +441,25 @@ export async function guardarArchivoDesdeMemoria(
  * Comprime un listado de archivos en un stream ZIP y lo envía a la Response.
  * Ideal para "Descargar todo" sin crear archivos temporales en el servidor.
  *
- * @param res        - Respuesta de Express
- * @param archivos   - Lista de objetos con ruta absoluta y nombre deseado en el ZIP
- * @param nombreZip  - Nombre del archivo .zip final (sin extensión)
+ * Usa compresión zlib nivel 1 (rápida) para soportar lotes grandes (1700+ archivos)
+ * sin bloquear el event loop por mucho tiempo.
+ *
+ * @param res                   - Respuesta de Express
+ * @param archivos              - Lista de objetos con ruta absoluta y nombre deseado en el ZIP
+ * @param nombreZip             - Nombre del archivo .zip final (sin extensión)
+ * @param hashesNoEncontrados   - Hashes que no se encontraron en BD (se incluyen como manifiesto)
  */
 export async function comprimirArchivos(
   res: Response,
   archivos: { rutaAbsoluta: string; nombreDeseado: string; isS3?: boolean; s3Key?: string }[],
   nombreZip: string,
+  hashesNoEncontrados: string[] = [],
 ): Promise<void> {
   const archiver = (await import('archiver')).default;
-  const archive = archiver('zip', { zlib: { level: 9 } });
+
+  // Nivel 1: compresión rápida. Con 1700 archivos, level 9 sería ~10x más lento
+  // y la diferencia de tamaño es mínima (~5-10% menos con level 9).
+  const archive = archiver('zip', { zlib: { level: 1 } });
 
   // Configurar headers para descarga de archivo binario
   res.setHeader('Content-Type', 'application/zip');
@@ -460,13 +468,29 @@ export async function comprimirArchivos(
     `attachment; filename="${encodeURIComponent(nombreZip)}.zip"`,
   );
 
+  // Manejar errores del stream de archiver para evitar que la respuesta quede colgada
+  archive.on('error', (err) => {
+    console.error('[ZIP] Error al comprimir archivos:', err);
+    if (!res.headersSent) {
+      res.status(500).end();
+    } else {
+      res.destroy();
+    }
+  });
+
+  // Manejar cierre prematuro del cliente (ej: cancelación de descarga)
+  res.on('close', () => {
+    if (!archive.closed) {
+      archive.abort();
+    }
+  });
+
   // Pipe del archivo comprimido a la respuesta
   archive.pipe(res);
 
   for (const item of archivos) {
     try {
       if (item.isS3 && item.s3Key) {
-        // Importación dinámica para evitar dependencia circular estricta si archivo.utils.ts carga primero
         const { obtenerStreamDeS3 } = await import('@/utils/s3.utils');
         const stream = await obtenerStreamDeS3(item.s3Key);
         archive.append(stream, { name: item.nombreDeseado });
@@ -481,6 +505,23 @@ export async function comprimirArchivos(
     }
   }
 
+  // Si hay hashes no encontrados, incluir un manifiesto informativo en el ZIP
+  if (hashesNoEncontrados.length > 0) {
+    const contenido = [
+      `=== MANIFIESTO DE DESCARGA BATCH ===`,
+      `Fecha: ${new Date().toISOString()}`,
+      `Total solicitados: ${archivos.length + hashesNoEncontrados.length}`,
+      `Total descargados: ${archivos.length}`,
+      `No encontrados: ${hashesNoEncontrados.length}`,
+      ``,
+      `--- Hashes no encontrados ---`,
+      ...hashesNoEncontrados,
+    ].join('\n');
+
+    archive.append(contenido, { name: '_manifiesto_errores.txt' });
+  }
+
   // Finalizar el stream
   await archive.finalize();
 }
+
