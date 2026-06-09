@@ -53,7 +53,7 @@ app.use(
 
 // Rate limiting global — protege contra abuso y ataques de fuerza bruta
 // Para el sistema escolar: 200 req / 15 min por IP es razonable para uso normal
-app.use(
+/*app.use(
   rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 500,
@@ -65,7 +65,7 @@ app.use(
       codigo: 'TOO_MANY_REQUESTS',
     },
   }),
-);
+);*/
 
 // Rate limiting estricto para rutas de autenticación (login, refresh)
 /*const limitarAuth = rateLimit({
