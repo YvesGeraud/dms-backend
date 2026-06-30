@@ -130,12 +130,12 @@ class DtDocumentoController {
     }
 
     const archivos = documentos.map((doc) => {
-      let nombreDeseado = doc.nombre_original;
+      let nombreDeseado = doc.nombre_sistema;
 
       if (conCarpetas) {
         // Estructura: modulo/id_usuario/archivo.ext
         const modulo = doc.ct_tipo_documento.modulo.replace(/\s+/g, '_').toLowerCase();
-        nombreDeseado = `${modulo}/${doc.id_ct_usuario}/${doc.nombre_original}`;
+        nombreDeseado = `${modulo}/${doc.id_ct_usuario}/${doc.nombre_sistema}`;
       }
 
       return {
@@ -197,11 +197,11 @@ class DtDocumentoController {
 
     // Construir lista de archivos para el ZIP
     const archivos = documentos.map((doc) => {
-      let nombreDeseado = doc.nombre_original;
+      let nombreDeseado = doc.nombre_sistema;
 
       if (carpetas) {
         const modulo = doc.ct_tipo_documento.modulo.replace(/\s+/g, '_').toLowerCase();
-        nombreDeseado = `${modulo}/${doc.id_ct_usuario}/${doc.nombre_original}`;
+        nombreDeseado = `${modulo}/${doc.id_ct_usuario}/${doc.nombre_sistema}`;
       }
 
       return {
