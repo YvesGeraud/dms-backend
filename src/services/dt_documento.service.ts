@@ -102,9 +102,11 @@ class DtDocumentoService {
 
   /**
    * Sube un lote de archivos al sistema.
-   * Ejecuta subidas individuales en paralelo, reutilizando la validación
-   * y deduplicación por archivo. Si alguno falla (ej. extensión inválida),
-   * Express manejará el error e interrumpirá la ejecución.
+   *
+   * Mejoras respecto a Promise.all original:
+   *   - Consulta ct_tipo_documento UNA sola vez para todos los archivos (evita N queries)
+   *   - Usa Promise.allSettled para que un archivo fallido no cancele los demás
+   *   - Retorna resultados individuales: éxito o error por archivo
    *
    * @param datos      - IDs comunes (mismo tipo de documento y usuario para todos)
    * @param archivos   - Array de archivos en memoria
@@ -115,13 +117,83 @@ class DtDocumentoService {
     archivos: Express.Multer.File[],
     idUsuario: number,
   ) {
-    // Si necesitas validar el tipo de documento una sola vez para ahorro de CPU/DB,
-    // podrías refactorizar `subirDocumento` para inyectar `tipodoc`.
-    // Por simplicidad y reuso total, ejecutamos en Promise.all:
-    const operaciones = archivos.map((archivo) => this.subirDocumento(datos, archivo, idUsuario));
+    const tipodoc = await buscarOError(
+      prisma.ct_tipo_documento.findFirst({
+        where: { id_ct_tipo_documento: datos.id_ct_tipo_documento, estado: true },
+      }),
+      'ct_tipo_documento',
+    );
 
-    // Se ejecutan las subidas concurrentemente
-    return Promise.all(operaciones);
+    const resultados = await Promise.allSettled(
+      archivos.map((archivo) => this._subirConTipo(datos, archivo, idUsuario, tipodoc)),
+    );
+
+    return resultados.map((r, i) => {
+      const nombreArchivo = archivos[i]!.originalname;
+      if (r.status === 'fulfilled') {
+        return { exito: true, archivo: nombreArchivo, documento: r.value };
+      }
+      return {
+        exito: false,
+        archivo: nombreArchivo,
+        error: r.reason instanceof Error ? r.reason.message : String(r.reason),
+      };
+    });
+  }
+
+  /**
+   * Sube un único archivo dado su tipo ya validado desde BD.
+   * Método interno — usar subirDocumento (tipo desde BD) o subirDocumentosBatch.
+   */
+  private async _subirConTipo(
+    datos: SubirDocumentoDTO,
+    archivo: Express.Multer.File,
+    idUsuario: number,
+    tipodoc: { modulo: string; max_size_bytes: number; extensiones_permitidas: string; descripcion: string },
+  ) {
+    validarArchivoContraTipo(archivo, tipodoc);
+
+    const hash = calcularHashBuffer(archivo.buffer);
+    const ext = path.extname(archivo.originalname).toLowerCase();
+    const nombreSistema = `${hash}${ext}`;
+
+    const existente = await prisma.dt_documento.findFirst({
+      where: { hash, estado: true },
+    });
+    if (existente) return { ...existente, duplicado: true };
+
+    const mimeType = EXTENSION_A_MIME[ext] ?? archivo.mimetype;
+    let rutaRelativa = '';
+
+    if (config.storageProvider === 's3') {
+      const { guardarArchivoEnS3 } = await import('@/utils/s3.utils');
+      const modLimpio = tipodoc.modulo.toLowerCase().replace(/\s+/g, '_');
+      const s3Prefix = modLimpio === 'comun' ? 'comun' : `sistema/${modLimpio}`;
+      const objectKey = `${s3Prefix}/${datos.id_ct_usuario}/${nombreSistema}`;
+      await guardarArchivoEnS3(archivo.buffer, mimeType, objectKey);
+      rutaRelativa = objectKey;
+    } else {
+      const directorio = resolverRutaModulo(tipodoc.modulo, datos.id_ct_usuario);
+      const { ruta } = await guardarArchivoDesdeMemoria(archivo.buffer, directorio, nombreSistema);
+      rutaRelativa = path.relative(process.cwd(), ruta).replace(/\\/g, '/');
+    }
+
+    const documento = await prisma.dt_documento.create({
+      data: {
+        nombre_original: archivo.originalname,
+        nombre_sistema: nombreSistema,
+        ruta_relativa: rutaRelativa,
+        mime_type: mimeType,
+        tama_o_bytes: archivo.size,
+        hash,
+        storage_provider: config.storageProvider,
+        id_ct_tipo_documento: datos.id_ct_tipo_documento,
+        id_ct_usuario: datos.id_ct_usuario,
+        id_ct_usuario_in: idUsuario,
+      },
+    });
+
+    return { ...documento, duplicado: false };
   }
 
   /**

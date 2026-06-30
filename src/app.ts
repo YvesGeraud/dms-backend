@@ -10,8 +10,8 @@ import { prisma } from '@/config/database.config';
 const servidor = app.listen(config.puerto, () => {
   console.log(
     `\n    ╔════════════════════════════════════════════╗` +
-      `\n    ║  🍽️  RESTAURANTE API                        ║` +
-      `\n    ║  🚀 http://localhost:${config.puerto}                  ║` +
+      `\n    ║  DMS API                                 ║` +
+      `\n    ║  🚀 http://localhost:${config.puerto}                      ║` +
       `\n    ║  🌍 Entorno: ${config.nodeEnv.toUpperCase().padEnd(30)}║` +
       `\n    ╚════════════════════════════════════════════╝\n`,
   );

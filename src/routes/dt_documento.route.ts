@@ -1,5 +1,6 @@
 import express from 'express';
 import multer from 'multer';
+import { rateLimit } from 'express-rate-limit';
 import { z } from 'zod';
 import dtDocumentoController from '@/controllers/dt_documento.controller';
 import { validar } from '@/middlewares/validar.middleware';
@@ -9,7 +10,25 @@ const router = express.Router();
 
 // memoryStorage: el archivo queda en req.file.buffer mientras se procesa.
 // El servicio valida contra BD y luego escribe a disco con el path correcto.
-const memoriaUpload = multer({ storage: multer.memoryStorage() });
+// Límite de 50 MB absoluto para evitar que archivos enormes saturen la RAM antes de validar.
+const memoriaUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 50 * 1024 * 1024 },
+});
+
+// Rate limiter específico para endpoints de descarga ZIP.
+// Más estricto que el global (500/15 min): máximo 5 ZIPs por IP por minuto.
+const limitarDescargaZip = rateLimit({
+  windowMs: 60 * 1000,
+  max: 5,
+  standardHeaders: 'draft-8',
+  legacyHeaders: false,
+  message: {
+    exito: false,
+    mensaje: 'Demasiadas solicitudes de descarga desde tu IP. Espera un minuto.',
+    codigo: 'TOO_MANY_REQUESTS',
+  },
+});
 
 // Schema reutilizable para validar :hash en params
 const hashParamSchema = z.object({
@@ -63,14 +82,14 @@ router.post(
  * Se usa POST en vez de GET porque miles de hashes SHA-256 superan el límite de URL.
  * El límite de body se sube a 500kb en setup.ts (suficiente para ~5000 hashes de 64 chars).
  */
-router.post('/descargar-batch', dtDocumentoController.descargarBatch);
+router.post('/descargar-batch', limitarDescargaZip, dtDocumentoController.descargarBatch);
 
 /**
  * GET /api/dt_documento/lote/descargar?ids=1,2,3&estado=1&carpetas=true
  *
  * Descarga documentos de múltiples tipos en un solo ZIP.
  */
-router.get('/lote/descargar', dtDocumentoController.descargarPorTipo);
+router.get('/lote/descargar', limitarDescargaZip, dtDocumentoController.descargarPorTipo);
 
 /**
  * GET /api/dt_documento/tipo/:id/descargar
@@ -79,7 +98,7 @@ router.get('/lote/descargar', dtDocumentoController.descargarPorTipo);
  * Query params opcionales:
  *   - estado=1 (default) | estado=0 para descargar los inactivos
  */
-router.get('/tipo/:id/descargar', dtDocumentoController.descargarPorTipo);
+router.get('/tipo/:id/descargar', limitarDescargaZip, dtDocumentoController.descargarPorTipo);
 
 /**
  * GET /api/dt_documento/:hash/descargar?inline=true

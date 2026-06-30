@@ -92,4 +92,9 @@ export const config = {
     endpoint: opcional('AWS_S3_ENDPOINT', ''),
     forcePathStyle: opcional('AWS_S3_FORCE_PATH_STYLE', 'false') === 'true',
   },
+
+  zip: {
+    // Cuántos ZIPs pueden generarse al mismo tiempo. Aumentar si el servidor tiene más RAM/CPU.
+    maxConcurrentes: numero('MAX_ZIP_CONCURRENT', 5),
+  },
 } as const;

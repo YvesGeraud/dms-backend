@@ -90,3 +90,17 @@ export class ErrorNegocio extends AppError {
     super(mensaje, StatusCodes.UNPROCESSABLE_ENTITY, 'BUSINESS_RULE');
   }
 }
+
+/**
+ * 503 — Servicio temporalmente no disponible por carga.
+ * Incluye el header Retry-After para que el cliente sepa cuándo reintentar.
+ * Ej: semáforo de descargas ZIP lleno, pool de workers agotado.
+ */
+export class ErrorServicioOcupado extends AppError {
+  readonly retryAfter: number;
+
+  constructor(mensaje: string, retryAfterSegundos = 30) {
+    super(mensaje, StatusCodes.SERVICE_UNAVAILABLE, 'BUSINESS_RULE');
+    this.retryAfter = retryAfterSegundos;
+  }
+}

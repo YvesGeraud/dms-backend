@@ -3,7 +3,14 @@ import dtDocumentoService from '@/services/dt_documento.service';
 import { responder } from '@/utils/respuestas.utils';
 import { ErrorNegocio } from '@/utils/errores.utils';
 import { descargarArchivo, comprimirArchivos } from '@/utils/archivo.utils';
+import { Semaphore } from '@/utils/semaphore.utils';
+import { config } from '@/config/servidor.config';
 import type { SubirDocumentoDTO } from '@/schemas/dt_documento.schemas';
+
+const semZip = new Semaphore(
+  config.zip.maxConcurrentes,
+  'El servidor está procesando otras descargas masivas. Intenta de nuevo en unos segundos.',
+);
 
 /**
  * Express 5 propaga automáticamente los errores de Promises rechazadas al
@@ -148,7 +155,7 @@ class DtDocumentoController {
       nombreZip = `lote_documentos_${ids.join('_')}`;
     }
 
-    await comprimirArchivos(res, archivos, nombreZip);
+    await semZip.run(() => comprimirArchivos(res, archivos, nombreZip));
   }
 
   /**
@@ -209,7 +216,7 @@ class DtDocumentoController {
     const nombreZip = `batch_${documentos.length}_documentos`;
 
     // Usar comprimirArchivos con manifiesto de errores
-    await comprimirArchivos(res, archivos, nombreZip, hashesNoEncontrados);
+    await semZip.run(() => comprimirArchivos(res, archivos, nombreZip, hashesNoEncontrados));
   }
 
   /**
