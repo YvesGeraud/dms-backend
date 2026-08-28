@@ -1,3 +1,4 @@
+import fs from 'fs';
 import type { Request, Response } from 'express';
 import dtDocumentoService from '@/services/dt_documento.service';
 import { responder } from '@/utils/respuestas.utils';
@@ -217,6 +218,47 @@ class DtDocumentoController {
 
     // Usar comprimirArchivos con manifiesto de errores
     await semZip.run(() => comprimirArchivos(res, archivos, nombreZip, hashesNoEncontrados));
+  }
+
+  /**
+   * GET /api/dt_documento/:hash/imagen
+   *
+   * Sirve la imagen directamente al cliente sin hacer redirect.
+   *
+   * El endpoint de descarga normal hace un `302` a la URL pre-signed de S3,
+   * cuyo dominio no está en `ALLOWED_ORIGINS` y rompe CORS en el navegador
+   * cuando la imagen se carga desde un `<img src>` o un modal.
+   *
+   * Este endpoint actúa como proxy real:
+   *   - Descarga el objeto desde S3 (o lee desde disco local) en el servidor
+   *   - Hace piping directo al cliente → el cliente siempre habla con nuestra API
+   *   - Agrega `Cache-Control: public, max-age=86400, immutable` — las imágenes
+   *     son inmutables porque su nombre en sistema ES su hash SHA-256
+   *   - Solo permite MIME types de imagen (rechaza PDF, ZIP, etc.)
+   */
+  async proxy(req: Request, res: Response): Promise<void> {
+    const hash = req.params['hash'] as string;
+    const { doc, rutaAbsoluta } = await dtDocumentoService.obtenerParaDescarga(hash);
+
+    if (!doc.mime_type.startsWith('image/')) {
+      throw new ErrorNegocio(
+        `El documento no es una imagen. MIME detectado: ${doc.mime_type}`,
+      );
+    }
+
+    res.setHeader('Content-Type', doc.mime_type);
+    res.setHeader('Cache-Control', 'public, max-age=86400, immutable');
+    res.setHeader('Content-Disposition', 'inline');
+
+    if (doc.storage_provider === 's3') {
+      // Piping directo desde S3 — sin redirect, cabeceras CORS controladas por nuestra API
+      const { obtenerStreamDeS3 } = await import('@/utils/s3.utils');
+      const stream = await obtenerStreamDeS3(rutaAbsoluta);
+      stream.pipe(res);
+    } else {
+      // Piping directo desde disco local
+      fs.createReadStream(rutaAbsoluta).pipe(res);
+    }
   }
 
   /**

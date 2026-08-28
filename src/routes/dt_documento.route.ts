@@ -101,6 +101,21 @@ router.get('/lote/descargar', limitarDescargaZip, dtDocumentoController.descarga
 router.get('/tipo/:id/descargar', limitarDescargaZip, dtDocumentoController.descargarPorTipo);
 
 /**
+ * GET /api/dt_documento/:hash/imagen
+ *
+ * Proxy de imagen — sirve la imagen inline sin redirect al cliente.
+ * Úsalo en lugar de /:hash/descargar?inline=true cuando cargues imágenes
+ * desde un <img src>, un modal, o fetch() en el frontend.
+ *
+ * ¿Por qué existe este endpoint?
+ * El endpoint de descarga hace un 302 a una URL pre-signed de S3, cuyo
+ * dominio no está en ALLOWED_ORIGINS, rompiendo CORS en el navegador.
+ * Este proxy hace el piping directamente desde S3 (o local) al cliente,
+ * por lo que el navegador siempre habla con nuestra propia API.
+ */
+router.get('/:hash/imagen', validar(hashParamSchema), dtDocumentoController.proxy);
+
+/**
  * GET /api/dt_documento/:hash/descargar?inline=true
  *
  * Descarga un documento mediante ReadStream (sin cargarlo en RAM).
